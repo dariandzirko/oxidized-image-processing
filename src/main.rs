@@ -10,11 +10,11 @@ fn main() {
     gauss2d_filt.gaussian_2d(1.8);
     
     let result= conv_2d(&gauss2d_filt, &img);
-    let result_display = ImageView::new(ImageInfo::rgb8(1920, 1080), &result);
+    // let result_display = ImageView::new(ImageInfo::rgb8(1920, 1080), &result);
 
-    // Create a window with default options and display the image.
-    let window = create_window("result", Default::default()).unwrap();
-    window.set_image("result-001", result_display);
+    // // Create a window with default options and display the image.
+    // let window = create_window("result", Default::default()).unwrap();
+    // window.set_image("result-001", result_display);
 
     result.save("result.png").unwrap();
 }
@@ -24,6 +24,7 @@ struct Kernel {
     //Maybe ndarray will be a lot faster here 
     //TODO look into ndarray 
     matrix: Vec<Vec<f32>>,
+    // Create a window with default options and display the image.
     dimensions: (usize,usize), //row, col
 }
 
@@ -32,6 +33,7 @@ impl Kernel {
     //How do I return nothing from this 
     fn new() -> Kernel {
         let matrix = vec![vec![0.0;2];2];
+        // Should keep the dimensions as (width, height) to match the library
         let dimensions = (1,1);    
         Kernel {matrix, dimensions}
     }
@@ -46,7 +48,7 @@ impl Kernel {
         let mut sum = 0.0;
 
         for i in 0..length+1 {
-            let x = i as f32 - (lim + 1.0);
+            let x = i as f32 - (lim);
             let val = E.powf( -( x.powf(2.0))/ (2.0*radius.powf(2.0)) );
             matrix[0][i] = val;
             sum+=val;
@@ -70,10 +72,10 @@ impl Kernel {
         let mut sum = 0.0;
 
         for row in 0..length {
-            let x = row as f32  - (lim + 1.0);
+            let x = row as f32  - (lim);
             for col in 0..length {
-                let y = col as f32 - (lim + 1.0);
-                let val = E.powf( -( x.powf(2.0) + y.powf(2.0))/ (2.0*radius.powf(2.0)) );
+                let y = col as f32 - (lim);
+                let val = E.powf( -( x.powf(2.0) + y.powf(2.0) ) / (2.0*radius.powf(2.0)) );
                 matrix[row][col] = val;
                 sum+=val;
             }   
@@ -109,62 +111,39 @@ impl Kernel {
 fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
     //TODO I think my rows and columns are backwards
-
+    //(width, height) everywhere
     let (base_cols, base_rows) = base.dimensions();
     let (kernel_cols, kernel_rows) = (kernel.dimensions.0 as u32, kernel.dimensions.1 as u32);
 
     let mut zero_pad_base = GrayImage::new(base_cols + 2*(kernel_cols-1), base_rows + 2*(kernel_rows-1) );
 
-    image::imageops::overlay(&mut zero_pad_base, base, kernel_cols as i64, kernel_rows as i64);
+    image::imageops::overlay(&mut zero_pad_base, base, (kernel_cols-1) as i64, (kernel_rows-1) as i64);
 
-    let result_rows = base_rows+kernel_rows-1; 
     let result_cols = base_cols+kernel_cols-1;
+    let result_rows = base_rows+kernel_rows-1; 
+    // let result_cols = base_cols;
+    // let result_rows = base_rows;    
 
     let mut result = GrayImage::new(result_cols, result_rows);
 
     //* The dimension does nothing as of now 
     let flipped_kernel = kernel.flip(2);
 
-    println!("Base dims {:} {:}", base_rows, base_cols);
-    println!("Zero_pad dims {:} {:}", base_rows + 2*(kernel_rows-1),base_cols + 2*(kernel_cols-1));
-    println!("Result dims {:} {:}", result_rows, result_cols);
-    println!("Kernel dims {:} {:}", kernel_rows, kernel_cols);
-    println!("Loop dims {:} {:}", result_rows - 1 + kernel_rows - 1, result_cols - 1 + kernel_cols - 1);
-
-    // Base dims 768 512
-    // Zero_pad dims 788 532
-    // Result dims 778 522
-    // Kernel dims 11 11
-    // Loop dims 787 531
-    for row in 0..result_rows {
+    for row in 0..result_rows{
         for col in 0..result_cols {
             let mut sum = 0.0;
-
-            //So going through the kernel math which only includes pixels in the kernel window
+            //Going through the kernel math which only includes pixels in the kernel window
             for kernel_row in 0..kernel_rows {
                 for kernel_col in 0..kernel_cols {
-                    // Gna comment about what elements are being accessed when.
-                    // So for the flipped kernel its easy, just use k to access
-                    // the row element and l for the col element, resulting in
-                    // something that looks like this 
-                    // flipped_kernel(current_kernel_row, current_kernel_col)
-                    // Then we have the element of the zero padded base, which
-                    // should be 
-                    // zero_pad_base(current_result_row+current_kernel_row-1,current_result_col+current_kernel_col-1)
 
                     let flipped_kernel_elem = flipped_kernel.matrix[kernel_row as usize][kernel_col as usize];
                     //*This has to be a fucking war crime
-                    let zero_padded_elem  = *zero_pad_base.get_pixel(row+kernel_row,col+kernel_col).channels().get(0).unwrap();
-
-                    //println("{?}", zero_padded_elem);   
-
+                    let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col, row+kernel_row).channels().get(0).unwrap();
+                
                     sum = sum + flipped_kernel_elem*zero_padded_elem as f32;
                 }
             }
-            //have to normalize sum to 255 maybe but prob not because filter is normalized to 1
-            
-            //TODO create a fucking pixel
-            let filtered_pixel: image::Luma::<u8> = image::Luma::<u8>([sum as u8]);
+            let filtered_pixel: image::Luma::<u8> = image::Luma::<u8>([(sum) as u8]);
             //let filtered_pixel = Pixel::from_channels(sum as u8, 0, 0, 0);
             //let test = Rgba::new(0,0,0,0);
             // let t = Pixel::from_channels(
@@ -173,7 +152,7 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
             //     NumCast::from(clamp(t3, 0.0, max)).unwrap(),
             //     NumCast::from(clamp(t4, 0.0, max)).unwrap()
             // );
-            result.put_pixel(row, col, filtered_pixel);
+            result.put_pixel(col, row, filtered_pixel);
         }
     }
 
