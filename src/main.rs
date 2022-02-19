@@ -7,7 +7,7 @@ fn main() {
     // `open` returns a `DynamicImage` on success.
     let img = image::open("Boy.tiff").unwrap().to_luma8();
     let mut gauss2d_filt = Kernel::new();
-    gauss2d_filt.gaussian_2d(3.0);
+    gauss2d_filt.gaussian_2d(1.8);
     
     let result= conv_2d(&gauss2d_filt, &img);
     let result_display = ImageView::new(ImageInfo::rgb8(1920, 1080), &result);
@@ -61,7 +61,7 @@ impl Kernel {
     }
 
     fn gaussian_2d(&mut self, radius: f32) {
-        let lim = 3.0*(radius.floor() as f32);
+        let lim = (3.0*radius).floor() as f32;
         let length = (2.0*lim+1.0) as usize;
 
         let mut matrix = vec![vec![0.0;length];length];
@@ -108,8 +108,10 @@ impl Kernel {
 //TODO This return type is a little cursed 
 fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
-    let (base_rows, base_cols) = base.dimensions();
-    let (kernel_rows, kernel_cols) = (kernel.dimensions.0 as u32, kernel.dimensions.1 as u32);
+    //TODO I think my rows and columns are backwards
+
+    let (base_cols, base_rows) = base.dimensions();
+    let (kernel_cols, kernel_rows) = (kernel.dimensions.0 as u32, kernel.dimensions.1 as u32);
 
     let mut zero_pad_base = GrayImage::new(base_cols + 2*(kernel_cols-1), base_rows + 2*(kernel_rows-1) );
 
@@ -123,6 +125,17 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
     //* The dimension does nothing as of now 
     let flipped_kernel = kernel.flip(2);
 
+    println!("Base dims {:} {:}", base_rows, base_cols);
+    println!("Zero_pad dims {:} {:}", base_rows + 2*(kernel_rows-1),base_cols + 2*(kernel_cols-1));
+    println!("Result dims {:} {:}", result_rows, result_cols);
+    println!("Kernel dims {:} {:}", kernel_rows, kernel_cols);
+    println!("Loop dims {:} {:}", result_rows - 1 + kernel_rows - 1, result_cols - 1 + kernel_cols - 1);
+
+    // Base dims 768 512
+    // Zero_pad dims 788 532
+    // Result dims 778 522
+    // Kernel dims 11 11
+    // Loop dims 787 531
     for row in 0..result_rows {
         for col in 0..result_cols {
             let mut sum = 0.0;
