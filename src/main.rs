@@ -183,6 +183,7 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
         for col in 0..result_cols {
             let mut sum = 0.0;
             //Going through the kernel math which only includes pixels in the kernel window
+            //TODO include all pixel channels so this will work on RGB images
             for kernel_row in 0..kernel_rows {
                 for kernel_col in 0..kernel_cols {
 
