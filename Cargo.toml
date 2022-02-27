@@ -8,5 +8,4 @@ resolver = "2"
 
 [dependencies]
 image={ version = "0.24.0" }
-show-image={ version = "0.10.1"}
-
+num = "0.4"
