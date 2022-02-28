@@ -10,11 +10,11 @@ fn main() {
     
     let gauss2d_filt = Kernel::gaussian_2d(1.8); 
     let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    gauss2d_conv_result.save("gauss2d_boy.png").unwrap();
+    gauss2d_conv_result.save("test_gauss2d_boy.png").unwrap();
 
     let highpass2d_filt = Kernel::highpass_2d(1.8);
     let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    highpass2d_conv_result.save("highpass2d_boy.png").unwrap();
+    highpass2d_conv_result.save("test_highpass2d_boy.png").unwrap();
 
     // let testsobel_filt = Kernel::test_sobel();
     // let testsobel_conv_result= conv_2d(&testsobel_filt, &img);
@@ -163,10 +163,10 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
     image::imageops::overlay(&mut zero_pad_base, base, (kernel_cols-1) as i64, (kernel_rows-1) as i64);
 
-    let result_cols = base_cols+kernel_cols-1;
-    let result_rows = base_rows+kernel_rows-1; 
-    // let result_cols = base_cols;
-    // let result_rows = base_rows;    
+    // let result_cols = base_cols+kernel_cols-1;
+    // let result_rows = base_rows+kernel_rows-1; 
+    let result_cols = base_cols;
+    let result_rows = base_rows;    
 
     let mut min_value = 1000.0;
     let mut max_value = -1000.0;
@@ -179,6 +179,7 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
     //This is a bad solution
     let mut negatives_flag = false;
 
+    //!!! Right now the convolution returns an image the same size as the original image
     for row in 0..result_rows{
         for col in 0..result_cols {
             let mut sum = 0.0;
@@ -189,7 +190,8 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
                     let flipped_kernel_elem = flipped_kernel.matrix[kernel_row as usize][kernel_col as usize];
                     //*This has to be a fucking war crime
-                    let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col, row+kernel_row).channels().get(0).unwrap();
+                    //let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col, row+kernel_row).channels().get(0).unwrap();
+                    let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col+kernel_cols/2, row+kernel_row+kernel_rows/2).channels().get(0).unwrap();
                 
                     sum = sum + flipped_kernel_elem*zero_padded_elem as f32;
                 }
