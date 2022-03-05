@@ -8,13 +8,17 @@ fn main() {
     // `open` returns a `DynamicImage` on success.
     let img = image::open("Boy.tiff").unwrap().to_luma8();
     
-    let gauss2d_filt = Kernel::gaussian_2d(1.8); 
-    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    gauss2d_conv_result.save("gauss2d_boy.png").unwrap();
+    // let gauss2d_filt = Kernel::gaussian_2d(1.8); 
+    // let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
+    // gauss2d_conv_result.save("gauss2d_boy.png").unwrap();
 
-    let highpass2d_filt = Kernel::highpass_2d(1.8);
-    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    highpass2d_conv_result.save("highpass2d_boy.png").unwrap();
+    // let highpass2d_filt = Kernel::highpass_2d(1.8);
+    // let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
+    // highpass2d_conv_result.save("highpass2d_boy.png").unwrap();
+
+    let sharpen2d_filt = Kernel::sharpening_2d(1.8, 8.0);
+    let sharpen2d_conv_result = 
+
 
     // let testsobel_filt = Kernel::test_sobel();
     // let testsobel_conv_result= conv_2d(&testsobel_filt, &img);
@@ -119,6 +123,20 @@ impl Kernel {
         dummy_filt.matrix.iter_mut()
         .flat_map(|row| row.iter_mut())
         .for_each(|item| *item= -(*item));
+
+        dummy_filt.matrix[lim][lim] += 1.0;
+
+        return dummy_filt;
+    }
+
+    fn sharpening_2d(radius:f32, beta: f32) -> Kernel {
+        let mut dummy_filt = Kernel::highpass_2d(radius);
+
+        let lim = (dummy_filt.dimensions.0 - 1)/2;
+
+        dummy_filt.matrix.iter_mut()
+        .flat_map(|row| row.iter_mut())
+        .for_each(|item| *item/=beta);
 
         dummy_filt.matrix[lim][lim] += 1.0;
 
