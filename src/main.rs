@@ -1,5 +1,5 @@
 use core::panic;
-use std::{f32::consts::E, io::BufRead};
+use std::{f32::consts::E, io::BufRead, env::temp_dir};
 use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba};
 use num;
 
@@ -8,22 +8,25 @@ fn main() {
     // `open` returns a `DynamicImage` on success.
     let img = image::open("Boy.tiff").unwrap().to_luma8();
 
-    let gauss2d_filt = Kernel::gaussian_2d(1.8); 
-    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    gauss2d_conv_result.save("test_gauss2d_boy.png").unwrap();
+    // let gauss2d_filt = Kernel::gaussian_2d(1.8); 
+    // let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
+    // gauss2d_conv_result.save("test_gauss2d_boy.png").unwrap();
 
-    let highpass2d_filt = Kernel::highpass_2d(1.8);
-    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    highpass2d_conv_result.save("test_highpass2d_boy.png").unwrap();
+    // let highpass2d_filt = Kernel::highpass_2d(1.8);
+    // let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
+    // highpass2d_conv_result.save("highpass2d_boy.png").unwrap();
 
     // let testsobel_filt = Kernel::test_sobel();
     // let testsobel_conv_result= conv_2d(&testsobel_filt, &img);
     // testsobel_conv_result.save("testsobel_boy.png").unwrap();
 
+    // let sharpen2d_filt = Kernel::sharpening_2d(1.8, 4.0);
+    // let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
+    // sharpen2d_conv_result.save("sharpen2d_boy.png").unwrap();
 
-    let sharpen2d_filt = Kernel::sharpening_2d(1.8, 8.0);
-    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
-    highpass2d_conv_result.save("sharpen2d_boy.png").unwrap();
+    let integral_image_boy = integral_image(&img);
+    integral_image_boy.save("integral_image_boy.png").unwrap();
+
 
 }
 
@@ -46,7 +49,7 @@ impl Kernel {
         Kernel {matrix, dimensions}
     }
     
-    fn print_filt(&self) {
+    fn print_kernel(&self) {
 
         let (columns, rows) = self.dimensions;
 
@@ -57,7 +60,15 @@ impl Kernel {
             }
             println!();
         }
+    }
 
+    fn sum_kernel(&self) -> f32 {
+        let mut sum = 0.0;
+        
+        self.matrix.iter().flat_map(|row| row.iter())
+        .for_each(|item| sum+= *item);
+
+        return sum;
     }
 
     fn gaussian_1d(radius: f32) {
@@ -183,10 +194,13 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
     image::imageops::overlay(&mut zero_pad_base, base, (kernel_cols-1) as i64, (kernel_rows-1) as i64);
 
-    // let result_cols = base_cols+kernel_cols-1;
-    // let result_rows = base_rows+kernel_rows-1; 
-    let result_cols = base_cols;
-    let result_rows = base_rows;    
+
+    //Swap the bounds and the zero_padded_elem commented lines to either get the "true"
+    //convolution or the same size convolution.
+    let result_cols = base_cols+kernel_cols-1;
+    let result_rows = base_rows+kernel_rows-1; 
+    // let result_cols = base_cols;
+    // let result_rows = base_rows;    
 
     let mut min_value = 1000.0;
     let mut max_value = -1000.0;
@@ -197,7 +211,14 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
     let flipped_kernel = kernel.flip(2);
 
     //This is a bad solution
-    let mut negatives_flag = false;
+    let kernel_sum = kernel.sum_kernel().round();
+    let mut temp_solution_flag = false;
+    if kernel_sum <= 0.0 {
+        temp_solution_flag = true;
+    } 
+
+    print!("kernel_sum: {}", kernel_sum);
+    println!("temp_solution_flag: {}", temp_solution_flag);
 
     //* Right now the convolution returns an image the same size as the original image
     for row in 0..result_rows{
@@ -210,8 +231,8 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
                     let flipped_kernel_elem = flipped_kernel.matrix[kernel_row as usize][kernel_col as usize];
                     //*This has to be a fucking war crime
-                    //let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col, row+kernel_row).channels().get(0).unwrap();
-                    let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col+kernel_cols/2, row+kernel_row+kernel_rows/2).channels().get(0).unwrap();
+                    let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col, row+kernel_row).channels().get(0).unwrap();
+                    //let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col+kernel_cols/2, row+kernel_row+kernel_rows/2).channels().get(0).unwrap();
                 
                     sum = sum + flipped_kernel_elem*zero_padded_elem as f32;
                 }
@@ -225,10 +246,7 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
                 min_value = sum;
             }
             // TODO Fix this. This is a horrible solution to negatives
-            if sum < 0.0 {
-                negatives_flag = true;
-            }
-            if negatives_flag {
+            if temp_solution_flag {
                 sum += 128.0;
             }
 
@@ -246,7 +264,6 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
         }
     }
 
-    //
     // This is a bunch of whore code written by a whore 
     //
     // Okay so uint8 is just rounding all the fucking negatives to 0, so attempting to scale negative
@@ -290,6 +307,42 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
     // }
 
 
+
+    return result;
+}
+
+fn integral_image(base: &GrayImage) -> GrayImage {
+
+    let (base_cols, base_rows) = base.dimensions();
+
+    let mut result = GrayImage::new(base_cols, base_rows);
+    let mut value_holder: Vec<Vec<f32>> = vec![vec![0.0;base_cols as usize+1];base_rows as usize+1];
+
+    let mut max: f32 = 0.0;
+
+    for row in 1..base_rows+1 {
+        for col in 1..base_cols+1 {
+            value_holder[row as usize][col as usize] = *base.get_pixel(col-1, row-1).channels().get(0).unwrap() as f32
+                                                        + value_holder[row as usize][col as usize-1] 
+                                                        + value_holder[row as usize-1][col as usize]
+                                                        - value_holder[row as usize-1][col as usize-1];
+
+            if value_holder[row as usize][col as usize] > max {
+                max = value_holder[row as usize][col as usize]
+            }
+        }
+    }
+
+    value_holder.iter_mut()
+    .flat_map(|row| row.iter_mut())
+    .for_each(|item| *item = *item/max*255.0);
+
+    for row in 0..base_rows {
+        for col in 0..base_cols {
+            let pixel: image::Luma::<u8> = image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
+            result.put_pixel(col, row, pixel);
+        }
+    }
 
     return result;
 }
