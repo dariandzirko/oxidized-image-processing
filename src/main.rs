@@ -311,6 +311,9 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
     return result;
 }
 
+//You typically will want to the raw integral image. In this case the value holder. 
+//So probably should return both. When creating the haar filter use value holder
+//not result
 fn integral_image(base: &GrayImage) -> GrayImage {
 
     let (base_cols, base_rows) = base.dimensions();
@@ -345,4 +348,32 @@ fn integral_image(base: &GrayImage) -> GrayImage {
     }
 
     return result;
+}
+
+//MATLAB CODE
+// image = double(image);
+
+// [image_rows,image_cols] = size(image);
+
+// zero_padded = zeros(image_rows+floor(Mv/2)*2,image_cols+2*Mh-1);
+
+// zero_padded(floor(Mv/2)+1:floor(Mv/2)+image_rows,Mh+1:Mh+image_cols) = image;
+
+// result = zeros(image_rows,image_cols);
+
+// integral = integral_of_image(zero_padded);
+
+// for i = 2:image_rows-1
+   
+//     for j = 1:image_cols
+    
+//         gray = integral(i+Mv,j+Mh) -integral(i+Mv,j) -integral(i,j+Mh) +integral(i,j);
+//         white = integral(i+Mv,j+2*Mh) -integral(i+Mv,j+Mh) -integral(i,j+2*Mh) +integral(i,j+Mh);
+
+//         result(i-1,j) = white - gray;
+//     end
+    
+// end
+fn haar_filter(base: &GrayImage, Mv:usize, Mh:usize) -> GrayImage {
+    return *base;
 }
