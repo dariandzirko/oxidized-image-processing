@@ -1,5 +1,5 @@
 use core::panic;
-use std::{f32::consts::E, io::BufRead, env::temp_dir};
+use std::{f32::consts::E, io::BufRead, env::temp_dir, num::IntErrorKind};
 use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba};
 use num;
 
@@ -24,9 +24,11 @@ fn main() {
     // let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
     // sharpen2d_conv_result.save("sharpen2d_boy.png").unwrap();
 
-    let integral_image_boy = integral_image(&img);
-    integral_image_boy.save("integral_image_boy.png").unwrap();
+    // let integral_image_boy = integral_image(&img);
+    // integral_image_boy.save("integral_image_boy.png").unwrap();
 
+    let haar_image_boy = haar_filter(&img, 20, 25);
+    haar_image_boy.save("haar_image_boy.png").unwrap();
 
 }
 
@@ -194,7 +196,6 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
     image::imageops::overlay(&mut zero_pad_base, base, (kernel_cols-1) as i64, (kernel_rows-1) as i64);
 
-
     //Swap the bounds and the zero_padded_elem commented lines to either get the "true"
     //convolution or the same size convolution.
     let result_cols = base_cols+kernel_cols-1;
@@ -306,15 +307,13 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
     //     unimplemented!("Need to do scaling thing here");
     // }
 
-
-
     return result;
 }
 
 //You typically will want to the raw integral image. In this case the value holder. 
 //So probably should return both. When creating the haar filter use value holder
-//not result
-fn integral_image(base: &GrayImage) -> GrayImage {
+//not result. Right now I will return the integral image 
+fn integral_image(base: &GrayImage) -> Vec<Vec<f32>> {
 
     let (base_cols, base_rows) = base.dimensions();
 
@@ -336,9 +335,69 @@ fn integral_image(base: &GrayImage) -> GrayImage {
         }
     }
 
+    // Uncomment this if you want a normalize integral image not just a huge one
+    // value_holder.iter_mut()
+    // .flat_map(|row| row.iter_mut())
+    // .for_each(|item| *item = *item/max*255.0);
+
+    // for row in 0..base_rows {
+    //     for col in 0..base_cols {
+    //         let pixel: image::Luma::<u8> = image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
+    //         result.put_pixel(col, row, pixel);
+    //     }
+    // }
+
+    return value_holder;
+}
+
+fn haar_filter(base: &GrayImage, Mh:u32, Mv:u32) -> GrayImage {
+    let (base_cols, base_rows) = base.dimensions();
+
+    let offset_row = Mv/2;
+    let offset_col = Mh;
+
+    let mut zero_pad_base = GrayImage::new(base_cols + 2*offset_col, base_rows + 2*offset_row);
+    image::imageops::overlay(&mut zero_pad_base, base, offset_col as i64, offset_row as i64);
+    
+    let mut value_holder: Vec<Vec<f32>> = vec![vec![0.0;base_cols as usize];base_rows as usize];
+    let mut result = GrayImage::new(base_cols, base_rows);
+
+    let integral_zero_pad_base = integral_image(&zero_pad_base);
+    
+    let mut gray = 0.0;
+    let mut white = 0.0;
+    let mut result_value= 0.0;
+    let mut max = 0.0;
+
+    for row in 1..base_rows-1 {
+        for col in 0..base_cols{
+
+            gray = integral_zero_pad_base[ (row + Mv) as usize][ (col + Mh) as usize] 
+                    - integral_zero_pad_base[ (row + Mv) as usize][ (col) as usize] 
+                    - integral_zero_pad_base[row as usize][(col + Mh) as usize] 
+                    + integral_zero_pad_base[row as usize][col as usize];
+                    
+            white = integral_zero_pad_base[ (row + Mv) as usize][ (col + 2*Mh) as usize] 
+                    - integral_zero_pad_base[ (row + Mv) as usize][ (col + Mh) as usize] 
+                    - integral_zero_pad_base[row as usize][ (col + 2*Mh) as usize] 
+                    + integral_zero_pad_base[row as usize][ (col+Mh) as usize];
+
+            result_value = white - gray;
+            value_holder[(row-1) as usize][col as usize] = result_value;
+
+            if max < result_value {
+                max = result_value;
+            }
+        }
+    }
+
+    // let result_pixel: image::Luma::<u8> = image::Luma::<u8>([result_value]);
+
+    // result.put_pixel(col, row, result_pixel);
+
     value_holder.iter_mut()
     .flat_map(|row| row.iter_mut())
-    .for_each(|item| *item = *item/max*255.0);
+    .for_each(|item| *item = *item/max*255.0 + 128.0);
 
     for row in 0..base_rows {
         for col in 0..base_cols {
@@ -346,34 +405,6 @@ fn integral_image(base: &GrayImage) -> GrayImage {
             result.put_pixel(col, row, pixel);
         }
     }
-
+    
     return result;
-}
-
-//MATLAB CODE
-// image = double(image);
-
-// [image_rows,image_cols] = size(image);
-
-// zero_padded = zeros(image_rows+floor(Mv/2)*2,image_cols+2*Mh-1);
-
-// zero_padded(floor(Mv/2)+1:floor(Mv/2)+image_rows,Mh+1:Mh+image_cols) = image;
-
-// result = zeros(image_rows,image_cols);
-
-// integral = integral_of_image(zero_padded);
-
-// for i = 2:image_rows-1
-   
-//     for j = 1:image_cols
-    
-//         gray = integral(i+Mv,j+Mh) -integral(i+Mv,j) -integral(i,j+Mh) +integral(i,j);
-//         white = integral(i+Mv,j+2*Mh) -integral(i+Mv,j+Mh) -integral(i,j+2*Mh) +integral(i,j+Mh);
-
-//         result(i-1,j) = white - gray;
-//     end
-    
-// end
-fn haar_filter(base: &GrayImage, Mv:usize, Mh:usize) -> GrayImage {
-    return *base;
 }
