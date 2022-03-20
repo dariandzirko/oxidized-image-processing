@@ -3,31 +3,8 @@ use std::{f32::consts::E, io::BufRead, env::temp_dir, num::IntErrorKind, vec, co
 use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba};
 use num::{self, pow, Float};
 
-fn main() {
-    // Use the open function to load an image from a Path.
-    // `open` returns a `DynamicImage` on success.
-    let img = image::open("Boy.tiff").unwrap().to_luma8();
-
-    // let testsobel_filt = Kernel::test_sobel();
-    // let testsobel_conv_result= conv_2d(&testsobel_filt, &img);
-    // testsobel_conv_result.save("testsobel_boy.png").unwrap();
-
-    let (standard_dev_boy, mean_boy) = local_statistics(&img, 5, 5);
-    standard_dev_boy.save("standard_dev_boy_h5_w5.png").unwrap();
-    mean_boy.save("mean_boy_h5_w5.png").unwrap();
-
-    let (standard_dev_boy, mean_boy) = local_statistics(&img, 7, 7);
-    standard_dev_boy.save("standard_dev_boy_h7_w7.png").unwrap();
-    mean_boy.save("mean_boy_h7_w7.png").unwrap();
-
-    let (standard_dev_boy, mean_boy) = local_statistics(&img, 9, 9);
-    standard_dev_boy.save("standard_dev_boy_h9_w9.png").unwrap();
-    mean_boy.save("mean_boy_h9_w9.png").unwrap();
-
-}
-
 //Going to start with assuming rectangular kernels
-struct Kernel {
+pub struct Kernel {
     //Maybe ndarray will be a lot faster here 
     //TODO look into ndarray 
     matrix: Vec<Vec<f32>>,
@@ -38,14 +15,14 @@ struct Kernel {
 impl Kernel {
     
     //How do I return nothing from this 
-    fn new() -> Kernel {
+    pub fn new() -> Kernel {
         let matrix = vec![];
         // Should keep the dimensions as (width, height) to match the library
         let dimensions = (0,0);    
         Kernel {matrix, dimensions}
     }
     
-    fn print_kernel(&self) {
+    pub fn print_kernel(&self) {
 
         let (columns, rows) = self.dimensions;
 
@@ -58,7 +35,7 @@ impl Kernel {
         }
     }
 
-    fn sum_kernel(&self) -> f32 {
+    pub fn sum_kernel(&self) -> f32 {
         let mut sum = 0.0;
         
         self.matrix.iter().flat_map(|row| row.iter())
@@ -67,7 +44,7 @@ impl Kernel {
         return sum;
     }
 
-    fn gaussian_1d(radius: f32) {
+    pub fn gaussian_1d(radius: f32) {
         let mut dummy_filt = Kernel::new();
 
         let lim = 3.0*(radius.floor() as f32);
@@ -93,7 +70,7 @@ impl Kernel {
         dummy_filt.dimensions = dimensions;
     }
 
-    fn gaussian_2d(radius: f32) -> Kernel {
+    pub fn gaussian_2d(radius: f32) -> Kernel {
         let mut dummy_filt = Kernel::new();
 
         let lim = (3.0*radius).floor() as f32;
@@ -124,7 +101,7 @@ impl Kernel {
         return dummy_filt;
     }   
 
-    fn highpass_2d(radius: f32) -> Kernel {
+    pub fn highpass_2d(radius: f32) -> Kernel {
         let mut dummy_filt = Kernel::gaussian_2d(radius);
 
         let lim = (dummy_filt.dimensions.0 - 1)/2;
@@ -138,7 +115,7 @@ impl Kernel {
         return dummy_filt;
     }
 
-    fn sharpening_2d(radius:f32, beta: f32) -> Kernel {
+    pub fn sharpening_2d(radius:f32, beta: f32) -> Kernel {
         let mut dummy_filt = Kernel::highpass_2d(radius);
 
         let lim = (dummy_filt.dimensions.0 - 1)/2;
@@ -152,7 +129,7 @@ impl Kernel {
         return dummy_filt;
     }
 
-    fn test_sobel() -> Kernel {
+    pub fn test_sobel() -> Kernel {
         let mut dummy_filt = Kernel::new();
 
         dummy_filt.matrix = vec![ vec![-1.0,-1.0,-1.0], vec![-1.0,8.0,-1.0], vec![-1.0,-1.0,-1.0]];
@@ -163,7 +140,7 @@ impl Kernel {
     // Dimensions is only one of 2 things because kernels are 2d
     //TODO flip should probably just flip in 1 dimension with an option to flip in both. So like dimension = 0 would be like along the 
     //TODO x or columns, dimension = 1 would be along y or rows and dimension = 2 would be both or some shit. Or even make a 2d flip idk
-    fn flip(& self, dimension: usize) -> Kernel {
+    pub fn flip(& self, dimension: usize) -> Kernel {
 
         let mut mat = self.matrix.clone();
         let dims = self.dimensions;
@@ -179,7 +156,7 @@ impl Kernel {
 }
 
 //TODO This return type is a little cursed 
-fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
+pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
     //TODO I think my rows and columns are backwards
     //(width, height) everywhere
@@ -307,7 +284,7 @@ fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 //You typically will want to the raw integral image. In this case the value holder. 
 //So probably should return both. When creating the haar filter use value holder
 //not result. Right now I will return the integral image 
-fn integral_image(base: &GrayImage) -> Vec<Vec<f32>> {
+pub fn integral_image(base: &GrayImage) -> Vec<Vec<f32>> {
 
     let (base_cols, base_rows) = base.dimensions();
 
@@ -345,7 +322,7 @@ fn integral_image(base: &GrayImage) -> Vec<Vec<f32>> {
 }
 
 // This is a bad solution but fuck em for the time being
-fn integral_image_matrix(base: Vec<Vec<f32>> ) -> Vec<Vec<f32>> {
+pub fn integral_image_matrix(base: Vec<Vec<f32>> ) -> Vec<Vec<f32>> {
 
     let base_rows = base.len();
     let base_cols = base[0].len();
@@ -365,9 +342,7 @@ fn integral_image_matrix(base: Vec<Vec<f32>> ) -> Vec<Vec<f32>> {
     return value_holder;
 }
 
-
-
-fn haar_filter(base: &GrayImage, Mh:u32, Mv:u32) -> GrayImage {
+pub fn haar_filter(base: &GrayImage, Mh:u32, Mv:u32) -> GrayImage {
     let (base_cols, base_rows) = base.dimensions();
 
     let offset_row = Mv/2;
@@ -426,7 +401,7 @@ fn haar_filter(base: &GrayImage, Mh:u32, Mv:u32) -> GrayImage {
     return result;
 }
 
-fn image_raised_power(base: &GrayImage, power: f32 ) -> Vec<Vec<f32>>{ 
+pub fn image_raised_power(base: &GrayImage, power: f32 ) -> Vec<Vec<f32>>{ 
     let (base_cols, base_rows) = base.dimensions();
 
     let mut float_result = vec![vec![0.0;base_cols as usize]; base_rows as usize];
@@ -441,7 +416,7 @@ fn image_raised_power(base: &GrayImage, power: f32 ) -> Vec<Vec<f32>>{
 }
 
 // Return order is standard dev iamge first and mean image second
-fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32) -> (GrayImage, GrayImage) {
+pub fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32) -> (GrayImage, GrayImage) {
 
     let(base_cols, base_rows) = base.dimensions();
 
@@ -566,23 +541,18 @@ fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32) -> 
     return (result_standard_dev, result_mean);
 }
 
-fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayImage, std::io::Error> {
+pub fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayImage, std::io::Error> {
     
     let (base_cols, base_rows) = base.dimensions();
     let (seconday_cols, seconday_rows) = seconday.dimensions();
 
+    println!("base_cols: {} base_rows: {} secondary_cols: {} secondary_rows: {}", base_cols, base_rows, seconday_cols, seconday_rows);
 
-    if (base_cols>seconday_cols && base_rows>seconday_rows) {
-        return Err(std::io::ErrorKind::InvalidInput.into());
-    }
-    else {
+    if (base_cols>=seconday_cols && base_rows>=seconday_rows) {
         let mut value_holder: Vec<Vec<f32>> = vec![vec![0.0;base_cols as usize];base_rows as usize];
 
         let mut result = GrayImage::new(base_cols, seconday_cols);
         let mut difference;
-
-        let mut min = 300;
-        let mut max = 0;
 
         for row in 0..seconday_rows{
             for col in 0..seconday_cols {
@@ -590,10 +560,10 @@ fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayImage, 
                 let difference_pixel: image::Luma::<u8> = image::Luma::<u8>([((difference + 255)/2) as u8]);
             }
         }
-        //iter.enumerate();
-
         return Ok(result);
     }
-
+    else {
+        return Err(std::io::ErrorKind::InvalidInput.into());
+    }
 
 }

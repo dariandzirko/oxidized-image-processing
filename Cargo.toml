@@ -1,5 +1,5 @@
 [package]
-name = "dip_hw_1"
+name = "oxidized_image_processing"
 version = "0.1.0"
 edition = "2021"
 resolver = "2"
@@ -9,3 +9,7 @@ resolver = "2"
 [dependencies]
 image={ version = "0.24.0" }
 num = "0.4"
+
+[[test]]
+name = "test"
+src = "test/test.rs"

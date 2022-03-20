@@ -125,14 +125,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dip_hw_1"
-version = "0.1.0"
-dependencies = [
- "image",
- "num",
-]
-
-[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -439,6 +431,14 @@ checksum = "19e64526ebdee182341572e50e9ad03965aa510cd94427a4549448f285e957a1"
 dependencies = [
  "hermit-abi",
  "libc",
+]
+
+[[package]]
+name = "oxidized_image_processing"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "num",
 ]
 
 [[package]]
