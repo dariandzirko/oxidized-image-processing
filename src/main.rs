@@ -8,78 +8,9 @@ fn main() {
     // `open` returns a `DynamicImage` on success.
     let img = image::open("Boy.tiff").unwrap().to_luma8();
 
-    // Making Gauss Blur Truths
-    let gauss2d_filt = Kernel::gaussian_2d(1.2); 
-    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    gauss2d_conv_result.save("gauss2d_boy_r1.2.png").unwrap();
-
-    let gauss2d_filt = Kernel::gaussian_2d(1.8); 
-    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    gauss2d_conv_result.save("gauss2d_boy_r1.8.png").unwrap();
-
-    let gauss2d_filt = Kernel::gaussian_2d(2.5); 
-    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    gauss2d_conv_result.save("gauss2d_boy_r2.5.png").unwrap();
-
-    let gauss2d_filt = Kernel::gaussian_2d(4.0); 
-    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    gauss2d_conv_result.save("gauss2d_boy_r4.0.png").unwrap();
-
-    //Making Highpass Filt Truths
-    let highpass2d_filt = Kernel::highpass_2d(1.2);
-    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    highpass2d_conv_result.save("highpass2d_boy_r1.2.png").unwrap();
-
-    let highpass2d_filt = Kernel::highpass_2d(1.8);
-    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    highpass2d_conv_result.save("highpass2d_boy_r1.8.png").unwrap();
-
-    let highpass2d_filt = Kernel::highpass_2d(2.5);
-    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    highpass2d_conv_result.save("highpass2d_boy_r2.5.png").unwrap();
-
-    let highpass2d_filt = Kernel::highpass_2d(4.0);
-    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    highpass2d_conv_result.save("highpass2d_boy_r4.0.png").unwrap();
-
     // let testsobel_filt = Kernel::test_sobel();
     // let testsobel_conv_result= conv_2d(&testsobel_filt, &img);
     // testsobel_conv_result.save("testsobel_boy.png").unwrap();
-
-    //Making Sharpening Filt Truths
-    let sharpen2d_filt = Kernel::sharpening_2d(1.8, 4.0);
-    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
-    sharpen2d_conv_result.save("sharpen2d_boy_r1.8_b4.0.png").unwrap();
-
-    let sharpen2d_filt = Kernel::sharpening_2d(1.8, 8.0);
-    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
-    sharpen2d_conv_result.save("sharpen2d_boy_r1.8_b8.0.png").unwrap();
-
-    let sharpen2d_filt = Kernel::sharpening_2d(2.5, 4.0);
-    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
-    sharpen2d_conv_result.save("sharpen2d_boy_r2.5_b4.0.png").unwrap();
-
-    let sharpen2d_filt = Kernel::sharpening_2d(2.5, 8.0);
-    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
-    sharpen2d_conv_result.save("sharpen2d_boy_r2.5_b8.0.png").unwrap();
-
-    //Making Haar Truths
-    let haar_image_boy = haar_filter(&img, 30, 35);
-    haar_image_boy.save("haar_image_boy.png_mh30_mv35").unwrap();
-
-    let haar_image_boy = haar_filter(&img, 20, 25);
-    haar_image_boy.save("haar_image_boy.png_mh20_mv25").unwrap();
-
-    let haar_image_boy = haar_filter(&img, 10, 15);
-    haar_image_boy.save("haar_image_boy.png_mh10_mv15").unwrap();
-
-    let haar_image_boy = haar_filter(&img, 5, 5);
-    haar_image_boy.save("haar_image_boy.png_mh5_mv5").unwrap();
-
-    //Making Standard Dev and Mean Truths
-    let (standard_dev_boy, mean_boy) = local_statistics(&img, 3, 3);
-    standard_dev_boy.save("standard_dev_boy_h3_w3.png").unwrap();
-    mean_boy.save("mean_boy_h3_w3.png").unwrap();
 
     let (standard_dev_boy, mean_boy) = local_statistics(&img, 5, 5);
     standard_dev_boy.save("standard_dev_boy_h5_w5.png").unwrap();
@@ -549,27 +480,27 @@ fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32) -> 
 
             if row < (window_height/2) {
 
-                num_of_elements_in_window -= (window_height)/2-row*window_height;
+                num_of_elements_in_window -= (window_height/2)+(row*window_height);
 
                 if col < (window_width/2) {
                     num_of_elements_in_window -= (window_width/2-col)*(window_width-window_height/2-row);
                 }
 
                 if row > base_cols - window_height/2 {
-                    num_of_elements_in_window -= (col-base_cols+window_width/2)*(window_width-window_height/2-row);
+                    num_of_elements_in_window -= (col+window_width/2-base_cols)*(window_width-window_height/2-row);
                 }
             }
 
             else if row > base_rows - window_height/2 {
 
-                num_of_elements_in_window -= (row-base_rows+window_height/2)*window_height;
+                num_of_elements_in_window -= (row+window_height/2-base_rows)*window_height;
 
                 if col < window_width/2 {
-                    num_of_elements_in_window -= (window_width/2-col)*(window_width-(row-base_rows+window_height/2));
+                    num_of_elements_in_window -= (window_width/2-col)*(window_width-(row+window_height/2-base_rows));
                 }
 
                 if col > base_cols - window_height/2 {
-                    num_of_elements_in_window -= (col-base_cols+window_width/2)*(window_width-(row-base_rows+window_height/2));
+                    num_of_elements_in_window -= (col+window_width/2-base_cols)*(window_width-(row+window_height/2-base_rows));
                 }
             }
 
@@ -578,8 +509,8 @@ fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32) -> 
                     num_of_elements_in_window -= (window_width/2-col)*window_width
                 }
 
-                if col > base_cols - window_height/2 {
-                    num_of_elements_in_window -= (col-base_cols+window_width/2)*window_width;
+                if col > base_cols - window_width/2 {
+                    num_of_elements_in_window -= (col+window_width/2-base_cols)*window_width;
                 }
             }
 
