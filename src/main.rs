@@ -1,5 +1,5 @@
 use core::panic;
-use std::{f32::consts::E, io::BufRead, env::temp_dir, num::IntErrorKind, vec};
+use std::{f32::consts::E, io::BufRead, env::temp_dir, num::IntErrorKind, vec, collections::btree_set::Difference};
 use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba};
 use num::{self, pow, Float};
 
@@ -8,31 +8,90 @@ fn main() {
     // `open` returns a `DynamicImage` on success.
     let img = image::open("Boy.tiff").unwrap().to_luma8();
 
-    // let gauss2d_filt = Kernel::gaussian_2d(1.8); 
-    // let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
-    // gauss2d_conv_result.save("test_gauss2d_boy.png").unwrap();
+    // Making Gauss Blur Truths
+    let gauss2d_filt = Kernel::gaussian_2d(1.2); 
+    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
+    gauss2d_conv_result.save("gauss2d_boy_r1.2.png").unwrap();
 
-    // let highpass2d_filt = Kernel::highpass_2d(1.8);
-    // let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
-    // highpass2d_conv_result.save("highpass2d_boy.png").unwrap();
+    let gauss2d_filt = Kernel::gaussian_2d(1.8); 
+    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
+    gauss2d_conv_result.save("gauss2d_boy_r1.8.png").unwrap();
+
+    let gauss2d_filt = Kernel::gaussian_2d(2.5); 
+    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
+    gauss2d_conv_result.save("gauss2d_boy_r2.5.png").unwrap();
+
+    let gauss2d_filt = Kernel::gaussian_2d(4.0); 
+    let gauss2d_conv_result= conv_2d(&gauss2d_filt, &img);
+    gauss2d_conv_result.save("gauss2d_boy_r4.0.png").unwrap();
+
+    //Making Highpass Filt Truths
+    let highpass2d_filt = Kernel::highpass_2d(1.2);
+    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
+    highpass2d_conv_result.save("highpass2d_boy_r1.2.png").unwrap();
+
+    let highpass2d_filt = Kernel::highpass_2d(1.8);
+    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
+    highpass2d_conv_result.save("highpass2d_boy_r1.8.png").unwrap();
+
+    let highpass2d_filt = Kernel::highpass_2d(2.5);
+    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
+    highpass2d_conv_result.save("highpass2d_boy_r2.5.png").unwrap();
+
+    let highpass2d_filt = Kernel::highpass_2d(4.0);
+    let highpass2d_conv_result= conv_2d(&highpass2d_filt, &img);
+    highpass2d_conv_result.save("highpass2d_boy_r4.0.png").unwrap();
 
     // let testsobel_filt = Kernel::test_sobel();
     // let testsobel_conv_result= conv_2d(&testsobel_filt, &img);
     // testsobel_conv_result.save("testsobel_boy.png").unwrap();
 
-    // let sharpen2d_filt = Kernel::sharpening_2d(1.8, 4.0);
-    // let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
-    // sharpen2d_conv_result.save("sharpen2d_boy.png").unwrap();
+    //Making Sharpening Filt Truths
+    let sharpen2d_filt = Kernel::sharpening_2d(1.8, 4.0);
+    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
+    sharpen2d_conv_result.save("sharpen2d_boy_r1.8_b4.0.png").unwrap();
 
-    // let integral_image_boy = integral_image(&img);
-    // integral_image_boy.save("integral_image_boy.png").unwrap();
+    let sharpen2d_filt = Kernel::sharpening_2d(1.8, 8.0);
+    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
+    sharpen2d_conv_result.save("sharpen2d_boy_r1.8_b8.0.png").unwrap();
 
-    // let haar_image_boy = haar_filter(&img, 20, 25);
-    // haar_image_boy.save("haar_image_boy.png").unwrap();
+    let sharpen2d_filt = Kernel::sharpening_2d(2.5, 4.0);
+    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
+    sharpen2d_conv_result.save("sharpen2d_boy_r2.5_b4.0.png").unwrap();
 
+    let sharpen2d_filt = Kernel::sharpening_2d(2.5, 8.0);
+    let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &img);
+    sharpen2d_conv_result.save("sharpen2d_boy_r2.5_b8.0.png").unwrap();
+
+    //Making Haar Truths
+    let haar_image_boy = haar_filter(&img, 30, 35);
+    haar_image_boy.save("haar_image_boy.png_mh30_mv35").unwrap();
+
+    let haar_image_boy = haar_filter(&img, 20, 25);
+    haar_image_boy.save("haar_image_boy.png_mh20_mv25").unwrap();
+
+    let haar_image_boy = haar_filter(&img, 10, 15);
+    haar_image_boy.save("haar_image_boy.png_mh10_mv15").unwrap();
+
+    let haar_image_boy = haar_filter(&img, 5, 5);
+    haar_image_boy.save("haar_image_boy.png_mh5_mv5").unwrap();
+
+    //Making Standard Dev and Mean Truths
     let (standard_dev_boy, mean_boy) = local_statistics(&img, 3, 3);
-    standard_dev_boy.save("standard_dev_boy.png").unwrap();
-    mean_boy.save("mean_boy.png").unwrap();
+    standard_dev_boy.save("standard_dev_boy_h3_w3.png").unwrap();
+    mean_boy.save("mean_boy_h3_w3.png").unwrap();
+
+    let (standard_dev_boy, mean_boy) = local_statistics(&img, 5, 5);
+    standard_dev_boy.save("standard_dev_boy_h5_w5.png").unwrap();
+    mean_boy.save("mean_boy_h5_w5.png").unwrap();
+
+    let (standard_dev_boy, mean_boy) = local_statistics(&img, 7, 7);
+    standard_dev_boy.save("standard_dev_boy_h7_w7.png").unwrap();
+    mean_boy.save("mean_boy_h7_w7.png").unwrap();
+
+    let (standard_dev_boy, mean_boy) = local_statistics(&img, 9, 9);
+    standard_dev_boy.save("standard_dev_boy_h9_w9.png").unwrap();
+    mean_boy.save("mean_boy_h9_w9.png").unwrap();
 
 }
 
@@ -574,4 +633,36 @@ fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32) -> 
     }
 
     return (result_standard_dev, result_mean);
+}
+
+fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayImage, std::io::Error> {
+    
+    let (base_cols, base_rows) = base.dimensions();
+    let (seconday_cols, seconday_rows) = seconday.dimensions();
+
+
+    if (base_cols>seconday_cols && base_rows>seconday_rows) {
+        return Err(std::io::ErrorKind::InvalidInput.into());
+    }
+    else {
+        let mut value_holder: Vec<Vec<f32>> = vec![vec![0.0;base_cols as usize];base_rows as usize];
+
+        let mut result = GrayImage::new(base_cols, seconday_cols);
+        let mut difference;
+
+        let mut min = 300;
+        let mut max = 0;
+
+        for row in 0..seconday_rows{
+            for col in 0..seconday_cols {
+                difference = *base.get_pixel(col, row).channels().get(0).unwrap() as i32 - *seconday.get_pixel(col, row).channels().get(0).unwrap() as i32;
+                let difference_pixel: image::Luma::<u8> = image::Luma::<u8>([((difference + 255)/2) as u8]);
+            }
+        }
+        //iter.enumerate();
+
+        return Ok(result);
+    }
+
+
 }
