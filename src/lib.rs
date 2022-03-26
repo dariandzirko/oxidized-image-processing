@@ -544,24 +544,49 @@ pub fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32)
 pub fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayImage, std::io::Error> {
     
     let (base_cols, base_rows) = base.dimensions();
-    let (seconday_cols, seconday_rows) = seconday.dimensions();
+    let (secondary_cols, secondary_rows) = seconday.dimensions();
 
-    println!("base_cols: {} base_rows: {} secondary_cols: {} secondary_rows: {}", base_cols, base_rows, seconday_cols, seconday_rows);
+    println!("base_cols: {} base_rows: {} secondary_cols: {} secondary_rows: {}", base_cols, base_rows, secondary_cols, secondary_rows);
 
-    if (base_cols>=seconday_cols && base_rows>=seconday_rows) {
-        let mut value_holder: Vec<Vec<f32>> = vec![vec![0.0;base_cols as usize];base_rows as usize];
+    if base_cols>=secondary_cols && base_rows>=secondary_rows {
+        let mut value_holder: Vec<Vec<i32>> = vec![vec![0;base_cols as usize];base_rows as usize];
 
-        let mut result = GrayImage::new(base_cols, seconday_cols);
+        let mut result = GrayImage::new(base_cols, secondary_cols);
         let mut difference;
+        let mut max = 0;
+        let mut min = 1000;
 
-        for row in 0..seconday_rows{
-            for col in 0..seconday_cols {
+        for row in 0..secondary_rows{
+            for col in 0..secondary_cols {
                 difference = *base.get_pixel(col, row).channels().get(0).unwrap() as i32 - *seconday.get_pixel(col, row).channels().get(0).unwrap() as i32;
-                let difference_pixel: image::Luma::<u8> = image::Luma::<u8>([((difference + 255)/2) as u8]);
+                
+                if difference > max {
+                    max = difference;
+                }
+                
+                if difference < min {
+                    min = difference;
+                }
+
+                value_holder[row as usize][col as usize] = difference;
             }
         }
+
+        value_holder.iter_mut()
+        .flat_map(|row| row.iter_mut())
+        .for_each(|item| *item = (*item-min)/(max+min.abs())*255);
+    
+        for row in 0..secondary_rows {
+            for col in 0..secondary_cols {
+                let difference_pixel: image::Luma::<u8> = image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
+                
+                result.put_pixel(col, row, difference_pixel);
+            }
+        }
+
         return Ok(result);
     }
+
     else {
         return Err(std::io::ErrorKind::InvalidInput.into());
     }

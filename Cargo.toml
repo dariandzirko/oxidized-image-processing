@@ -10,6 +10,14 @@ resolver = "2"
 image={ version = "0.24.0" }
 num = "0.4"
 
+[[bin]]
+name = "oxidized_image_processing"
+src = "src/main.rs"
+
+[lib]
+name = "oxidized_image_processing"
+src = "src/lib.rs"
+
 [[test]]
 name = "test"
 src = "test/test.rs"
