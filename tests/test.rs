@@ -17,7 +17,16 @@ fn subtract_and_compare(function_result: &GrayImage, truth: &GrayImage) -> u64 {
     difference.iter_mut()
     .for_each(|pix| pixel_sum+=*pix as u64);
 
+    println!("{}", pixel_sum);
     return pixel_sum;
+}
+
+#[test]
+fn test_subtraction(){
+    let test1 = image::open("tests/truth/Gauss_Blur/gauss2d_boy_r1.2.png").unwrap().to_luma8();
+    let test2 = image::open("tests/truth/Gauss_Blur/gauss2d_boy_r1.2.png").unwrap().to_luma8();
+
+    assert_eq!(subtract_and_compare(&test1, &test2),0);
 }
 
 #[test]
@@ -122,7 +131,7 @@ fn test_sharpen_1r8_4b0(){
     let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &base);
 
     //TODO Remove unwraps
-    let r1_8_b4_0_truth = image::open("tests/truth/sharpen/sharpen2d_boy_r1.8_b4.0.png").unwrap().to_luma8();
+    let r1_8_b4_0_truth = image::open("tests/truth/Sharpen/sharpen2d_boy_r1.8_b4.0.png").unwrap().to_luma8();
 
     assert_eq!(subtract_and_compare(&sharpen2d_conv_result, &r1_8_b4_0_truth),0);
 }
@@ -134,7 +143,7 @@ fn test_sharpen_1r8_8b0(){
     let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &base);
 
     //TODO Remove unwraps
-    let r1_8_b8_0_truth = image::open("tests/truth/sharpen/sharpen2d_boy_r1.8_b8.0.png").unwrap().to_luma8();
+    let r1_8_b8_0_truth = image::open("tests/truth/Sharpen/sharpen2d_boy_r1.8_b8.0.png").unwrap().to_luma8();
 
     assert_eq!(subtract_and_compare(&sharpen2d_conv_result, &r1_8_b8_0_truth),0);
 }
@@ -146,7 +155,7 @@ fn test_sharpen_2r5_4b0(){
     let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &base);
 
     //TODO Remove unwraps
-    let r2_5_b4_0_truth = image::open("tests/truth/sharpen/sharpen2d_boy_r2.5_b4.0.png").unwrap().to_luma8();
+    let r2_5_b4_0_truth = image::open("tests/truth/Sharpen/sharpen2d_boy_r2.5_b4.0.png").unwrap().to_luma8();
 
     assert_eq!(subtract_and_compare(&sharpen2d_conv_result, &r2_5_b4_0_truth),0);
 }
@@ -158,7 +167,7 @@ fn test_sharpen_2r5_8b0(){
     let sharpen2d_conv_result = conv_2d(&sharpen2d_filt, &base);
 
     //TODO Remove unwraps
-    let r2_5_b8_0_truth = image::open("tests/truth/sharpen/sharpen2d_boy_r2.5_b8.0.png").unwrap().to_luma8();
+    let r2_5_b8_0_truth = image::open("tests/truth/Sharpen/sharpen2d_boy_r2.5_b8.0.png").unwrap().to_luma8();
 
     assert_eq!(subtract_and_compare(&sharpen2d_conv_result, &r2_5_b8_0_truth),0);
 }

@@ -10,6 +10,9 @@ resolver = "2"
 image={ version = "0.24.0" }
 num = "0.4"
 
+[profile.release]
+debug = true
+
 [[bin]]
 name = "oxidized_image_processing"
 src = "src/main.rs"

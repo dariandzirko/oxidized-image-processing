@@ -541,10 +541,10 @@ pub fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32)
     return (result_standard_dev, result_mean);
 }
 
-pub fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayImage, std::io::Error> {
+pub fn subtract_images(base: &GrayImage, secondary: &GrayImage) -> Result<GrayImage, std::io::Error> {
     
     let (base_cols, base_rows) = base.dimensions();
-    let (secondary_cols, secondary_rows) = seconday.dimensions();
+    let (secondary_cols, secondary_rows) = secondary.dimensions();
 
     println!("base_cols: {} base_rows: {} secondary_cols: {} secondary_rows: {}", base_cols, base_rows, secondary_cols, secondary_rows);
 
@@ -558,8 +558,8 @@ pub fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayIma
 
         for row in 0..secondary_rows{
             for col in 0..secondary_cols {
-                difference = *base.get_pixel(col, row).channels().get(0).unwrap() as i32 - *seconday.get_pixel(col, row).channels().get(0).unwrap() as i32;
-                
+                difference = *base.get_pixel(col, row).channels().get(0).unwrap() as i32 - *secondary.get_pixel(col, row).channels().get(0).unwrap() as i32;
+
                 if difference > max {
                     max = difference;
                 }
@@ -572,10 +572,12 @@ pub fn subtract_images(base: &GrayImage, seconday: &GrayImage) -> Result<GrayIma
             }
         }
 
-        value_holder.iter_mut()
-        .flat_map(|row| row.iter_mut())
-        .for_each(|item| *item = (*item-min)/(max+min.abs())*255);
-    
+        if  !(0..255).contains(&(max-min)){
+            value_holder.iter_mut()
+            .flat_map(|row| row.iter_mut())
+            .for_each(|item| *item = (*item-min)/(max.abs()+min.abs())*255);
+        }
+        
         for row in 0..secondary_rows {
             for col in 0..secondary_cols {
                 let difference_pixel: image::Luma::<u8> = image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
