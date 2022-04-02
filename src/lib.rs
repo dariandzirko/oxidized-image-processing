@@ -155,6 +155,69 @@ impl Kernel {
     }
 }
 
+//Cool Scaleable Image
+pub struct Image {
+    matrix: Vec<f32>,
+    channels: u8,
+    height: u32,
+    width: u32,
+
+    min: f32,
+    max: f32,
+}
+
+// Builder pattern for the above Image
+pub struct ImageBuilder {
+    matrix: Vec<f32>,
+    channels: u8,
+    height: u32,
+    width: u32,
+
+    min: f32,
+    max: f32,
+}
+
+impl ImageBuilder {
+    pub fn new() -> Self {
+        Self {
+            matrix: Vec<f32>,
+            channels: u8,
+            height: u32,
+            width: u32,
+        
+            min: f32,
+            max: f32,
+        }
+        }
+    }
+
+    pub fn with_title(self, title: &'static str) -> Self {
+        Self {
+            __title: title,
+            __width: self.width,
+            __title: self.height,
+        }
+    }
+    
+    pub fn with_dimensions(self, width: usize, height: usize) -> Self {
+        Self {
+            __title: self.title,
+            __width: width,
+            __title: height,
+        }
+    }
+
+    pub fn build(self) -> Window {
+        Window {
+            title: self.title,
+            width: self.width,
+            height: self.height,
+        }
+    }
+}
+
+
+
 //TODO This return type is a little cursed 
 pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
