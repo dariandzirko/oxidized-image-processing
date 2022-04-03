@@ -12,6 +12,7 @@ pub struct Kernel {
     dimensions: (usize,usize), //row, col
 }
 
+// TODO rewrite this. No new method. Make every filter type just return a kernel not edit the current one
 impl Kernel {
     
     //How do I return nothing from this 
@@ -205,31 +206,9 @@ pub struct Image {
     max: f32,
 }
 
-// Builder pattern for the above Image
-pub struct ImageBuilder {
-    matrix: Vec<f32>,
+impl Image {
 
-    channels: u32,
-    height: u32,
-    width: u32,
-
-    min: f32,
-    max: f32,
-}
-
-// Default pattern: much less code!
-impl Default for ImageBuilder {
-    fn default() -> Self {
-        Self {
-           title: "Default title",
-           width: 800,
-           height: 600,
-        }
-    }
-}
-
-impl ImageBuilder {
-    pub fn new(matrix: Vec<f32>, channels: u32, height: u32, width: u32 ) -> Self {
+    pub fn from_vec(matrix: Vec<f32>, channels: u32, height: u32, width: u32 ) -> Self {
         Self {
             min: min_vec_f32(&matrix).unwrap(),
             max: max_vec_f32(&matrix).unwrap(),
@@ -242,12 +221,8 @@ impl ImageBuilder {
         }
     }
 
-    pub fn from_vec(base: Vec<f32>, channels: u32, height: u32, width: u32 ) -> Self {
-        ImageBuilder::new(base, channels, height, width)
-    }
-
     //This is just proof of concept. Not worrying about channels
-    pub fn from_gray_image(self, base: &mut GrayImage) -> Self {
+    pub fn from_gray_image(base: &mut GrayImage) -> Self {
 
         let (base_cols, base_rows) = base.dimensions();
         let channels = 1;
@@ -256,29 +231,69 @@ impl ImageBuilder {
 
         base.iter_mut().for_each(|item| value_holder.push(*item as f32));
 
-        ImageBuilder::new(value_holder, channels, base_rows, base_cols)
-    }
-    
-    pub fn from_RGB_image(self, width: usize, height: usize) -> Self {
-        todo!();
-    }
+        Self {
+            min: min_vec_f32(&value_holder).unwrap(),
+            max: max_vec_f32(&value_holder).unwrap(),
+            
+            matrix: value_holder,
 
-    pub fn build(self) -> Image {
-        Image {
-            matrix: self.matrix,
-
-            channels: self.channels,
-            height: self.channels,
-            width: self.channels,
-        
-            min: self.min,
-            max: self.max,
+            channels,
+            height: base_rows,
+            width: base_cols,
         }
     }
     
-    pub fn subtract_images(self, other: Image) {
+    pub fn from_RGB_image(base: &RgbImage) -> Self {
+        todo!();
+        let (base_cols, base_rows) = base.dimensions();
+        let channels = 1;
 
-        let mut result = ImageBuilder::new().build();
+        let mut value_holder: Vec<f32> = Vec::new();
+
+        base.iter_mut().for_each(|item| value_holder.push(*item as f32));
+
+        Self {
+            min: min_vec_f32(&value_holder).unwrap(),
+            max: max_vec_f32(&value_holder).unwrap(),
+            
+            matrix: value_holder,
+
+            channels,
+            height: base_rows,
+            width: base_cols,
+        }
+    }
+    
+    pub fn subtract_images(self, other: Image) -> Result<Image, std::io::Error> {
+    
+        if self.width>=other.width && self.height>=other.height {
+            let mut result = Vec::new();
+
+            self.matrix.iter().zip(other.matrix.iter()).for_each(|item| result.push( item.0 - item.1) );
+
+            return Ok(Image::from_vec(result, self.channels, self.height, self.width));
+        }
+    
+        else {
+            return Err(std::io::ErrorKind::InvalidInput.into());
+        }
+    
+    }
+
+    // 1, 2, 3, 4
+    // 5, 6, 7, 8
+    // 9, 10, 11, 12
+
+    // heightxwidthxdepth
+    // 3x4x4
+
+    // r1, g1, b1, a1 | r2, g2, b2, a2 | r3, g3, b3, a3 | r4, g4, b4, a4,
+    // r5, g5, b5, a5 | r6, g6, b6, a6 | r7, g7, b7, a7 | r8, g8, b8, a8,
+    // r9, g9, b9, a9 | r10, g10, b10, a10 | r11, g11, b11, a11 | r12, g12, b12, a12, 
+
+    pub fn get_pixel(self, x: u32, y: u32, z: u32) -> f32 {
+        //probably is wrong 
+        *self.matrix.get( (x*self.width + z + y*self.height) as usize).unwrap()
 
     }
 
@@ -290,8 +305,6 @@ impl ImageBuilder {
         todo!()
     }
 }
-
-
 
 //TODO This return type is a little cursed 
 pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
