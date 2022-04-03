@@ -1,6 +1,6 @@
 use core::panic;
 use std::{f32::consts::E, io::BufRead, env::temp_dir, num::IntErrorKind, vec, collections::btree_set::Difference};
-use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba};
+use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba, GrayAlphaImage};
 use num::{self, pow, Float};
 
 //Going to start with assuming rectangular kernels
@@ -155,10 +155,49 @@ impl Kernel {
     }
 }
 
+fn max_vec_f32(veccy: &Vec<f32>) -> Option<f32> {
+    
+    let mut max = None;
+
+    veccy.iter().for_each(|item| {
+        match max {
+            None => { max = Some(*item); },
+            Some(max_val) => {
+                if max_val < *item {
+                     max = Some(*item);
+                }
+            },
+         }
+    });
+
+    max
+}
+
+fn min_vec_f32(veccy: &Vec<f32>) -> Option<f32> {
+    
+    let mut min = None;
+
+    veccy.iter().for_each(|item| {
+        match min {
+            None => { min = Some(*item); },
+            Some(min_val) => {
+                if min_val > *item {
+                     min = Some(*item);
+                }
+            },
+         }
+    });
+
+    min
+}
+
 //Cool Scaleable Image
+//Trying to make a 1d vector of size channels*width*length that would need a bunch of proper math handling methods. To properly access the individual values
+//Also want to make it faster. Also also want to be able to take in any type of image RGB or BW and create a scaleable represntation. Or maybe just take those 
+//inputs as parameters to the function ie subtraction and then create the scaled image idk. This seems like a better solution maybe. 
 pub struct Image {
     matrix: Vec<f32>,
-    channels: u8,
+    channels: u32,
     height: u32,
     width: u32,
 
@@ -169,7 +208,8 @@ pub struct Image {
 // Builder pattern for the above Image
 pub struct ImageBuilder {
     matrix: Vec<f32>,
-    channels: u8,
+
+    channels: u32,
     height: u32,
     width: u32,
 
@@ -177,42 +217,77 @@ pub struct ImageBuilder {
     max: f32,
 }
 
-impl ImageBuilder {
-    pub fn new() -> Self {
+// Default pattern: much less code!
+impl Default for ImageBuilder {
+    fn default() -> Self {
         Self {
-            matrix: Vec<f32>,
-            channels: u8,
-            height: u32,
-            width: u32,
-        
-            min: f32,
-            max: f32,
+           title: "Default title",
+           width: 800,
+           height: 600,
         }
+    }
+}
+
+impl ImageBuilder {
+    pub fn new(matrix: Vec<f32>, channels: u32, height: u32, width: u32 ) -> Self {
+        Self {
+            min: min_vec_f32(&matrix).unwrap(),
+            max: max_vec_f32(&matrix).unwrap(),
+            
+            matrix,
+
+            channels,
+            height,
+            width,
         }
     }
 
-    pub fn with_title(self, title: &'static str) -> Self {
-        Self {
-            __title: title,
-            __width: self.width,
-            __title: self.height,
+    pub fn from_vec(base: Vec<f32>, channels: u32, height: u32, width: u32 ) -> Self {
+        ImageBuilder::new(base, channels, height, width)
+    }
+
+    //This is just proof of concept. Not worrying about channels
+    pub fn from_gray_image(self, base: &mut GrayImage) -> Self {
+
+        let (base_cols, base_rows) = base.dimensions();
+        let channels = 1;
+
+        let mut value_holder: Vec<f32> = Vec::new();
+
+        base.iter_mut().for_each(|item| value_holder.push(*item as f32));
+
+        ImageBuilder::new(value_holder, channels, base_rows, base_cols)
+    }
+    
+    pub fn from_RGB_image(self, width: usize, height: usize) -> Self {
+        todo!();
+    }
+
+    pub fn build(self) -> Image {
+        Image {
+            matrix: self.matrix,
+
+            channels: self.channels,
+            height: self.channels,
+            width: self.channels,
+        
+            min: self.min,
+            max: self.max,
         }
     }
     
-    pub fn with_dimensions(self, width: usize, height: usize) -> Self {
-        Self {
-            __title: self.title,
-            __width: width,
-            __title: height,
-        }
+    pub fn subtract_images(self, other: Image) {
+
+        let mut result = ImageBuilder::new().build();
+
     }
 
-    pub fn build(self) -> Window {
-        Window {
-            title: self.title,
-            width: self.width,
-            height: self.height,
-        }
+    pub fn to_gray_image() -> GrayImage {
+        todo!()
+    }
+
+    pub fn to_rgb_image() -> RgbImage {
+        todo!()
     }
 }
 
