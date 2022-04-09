@@ -1,6 +1,6 @@
 use core::panic;
 use std::{f32::consts::E, io::BufRead, env::temp_dir, num::IntErrorKind, vec, collections::btree_set::Difference};
-use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba, GrayAlphaImage};
+use image::{GenericImageView, DynamicImage, RgbImage, Rgb, ImageBuffer, Luma, GrayImage, Pixel, Rgba, GrayAlphaImage, GenericImage, Primitive};
 use num::{self, pow, Float};
 
 //Going to start with assuming rectangular kernels
@@ -206,9 +206,39 @@ pub struct Image {
     max: f32,
 }
 
+//Trying to implement these things because Shane thought it would be cool
+// impl GenericImageView for Image {
+//     type Pixel = Pixel;
+
+//     fn dimensions(&self) -> (u32, u32) {
+//         todo!()
+//     }
+
+//     fn bounds(&self) -> (u32, u32, u32, u32) {
+//         todo!()
+//     }
+
+//     fn get_pixel(&self, _: u32, _: u32) -> <Self as GenericImageView>::Pixel { 
+//         todo!() 
+//     }
+// }
+
+// impl GenericImage for Image {
+//     fn get_pixel_mut(&mut self, _: u32, _: u32) -> &mut <Self as GenericImageView>::Pixel { 
+//         todo!() 
+//     }
+//     fn put_pixel(&mut self, _: u32, _: u32, _: <Self as GenericImageView>::Pixel) { 
+//         todo!() 
+//     }
+//     fn blend_pixel(&mut self, _: u32, _: u32, _: <Self as GenericImageView>::Pixel) { 
+//         todo!() 
+//     }
+// }
+
 impl Image {
 
     pub fn from_vec(matrix: Vec<f32>, channels: u32, height: u32, width: u32 ) -> Self {
+
         Self {
             min: min_vec_f32(&matrix).unwrap(),
             max: max_vec_f32(&matrix).unwrap(),
@@ -222,21 +252,21 @@ impl Image {
     }
 
     //This is just proof of concept. Not worrying about channels
-    pub fn from_gray_image(base: &mut GrayImage) -> Self {
+    pub fn from_gray_image(base: & GrayImage) -> Self {
 
         let (base_cols, base_rows) = base.dimensions();
         let channels = 1;
 
         let mut value_holder: Vec<f32> = Vec::new();
 
-        base.iter_mut().for_each(|item| value_holder.push(*item as f32));
+        base.iter().for_each(|item| value_holder.push(*item as f32));
 
         Self {
             min: min_vec_f32(&value_holder).unwrap(),
             max: max_vec_f32(&value_holder).unwrap(),
             
             matrix: value_holder,
-
+            
             channels,
             height: base_rows,
             width: base_cols,
@@ -264,8 +294,8 @@ impl Image {
         }
     }
     
-    pub fn subtract_images(self, other: Image) -> Result<Image, std::io::Error> {
-    
+    pub fn subtract_images(&self, other: Image) -> Result<Image, std::io::Error> {
+
         if self.width>=other.width && self.height>=other.height {
             let mut result = Vec::new();
 
@@ -273,11 +303,11 @@ impl Image {
 
             return Ok(Image::from_vec(result, self.channels, self.height, self.width));
         }
-    
+
         else {
             return Err(std::io::ErrorKind::InvalidInput.into());
         }
-    
+
     }
 
     // 1, 2, 3, 4
@@ -291,14 +321,38 @@ impl Image {
     // r5, g5, b5, a5 | r6, g6, b6, a6 | r7, g7, b7, a7 | r8, g8, b8, a8,
     // r9, g9, b9, a9 | r10, g10, b10, a10 | r11, g11, b11, a11 | r12, g12, b12, a12, 
 
-    pub fn get_pixel(self, x: u32, y: u32, z: u32) -> f32 {
+    pub fn get_pixel(&self, x: u32, y: u32, z: u32) -> f32 {
         //probably is wrong 
         *self.matrix.get( (x*self.width + z + y*self.height) as usize).unwrap()
-
     }
 
-    pub fn to_gray_image() -> GrayImage {
-        todo!()
+    pub fn scale_image(&mut self) {
+
+        // range: 100 - 400
+        // conversion: (item-100)*255/(400-100)
+        // range: -100 - 200
+        // conversion: (item--100)*255(200--100)
+
+        if (self.max - self.min) > 255.0 {
+            // I put the floor here
+            self.matrix.iter_mut().for_each(|item| *item = (*item-self.min)*255.0/(self.max-self.min).floor() )
+        }
+    }
+
+    //           0 1 2 3 | 0 1 2  3
+    // 0 1 2 3 | 4 5 6 7 | 8 9 10 11 
+
+    pub fn to_gray_image(&mut self) -> GrayImage { 
+        
+        self.scale_image();
+
+        let mut result = GrayImage::new(self.width, self.height);
+        for (index, value) in self.matrix.iter().enumerate() {
+            let pixel: image::Luma::<u8> = image::Luma::<u8>([*value as u8]);
+            result.put_pixel( index as u32 % self.width , index as u32/self.width, pixel)
+        }
+
+        result
     }
 
     pub fn to_rgb_image() -> RgbImage {

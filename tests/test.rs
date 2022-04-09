@@ -22,9 +22,19 @@ fn subtract_and_compare(function_result: &GrayImage, truth: &GrayImage) -> u64 {
 }
 
 #[test]
+fn test_gray_image() {
+    let base = image::open("Boy.tiff").unwrap().to_luma8();
+    let mut test1 = Image::from_gray_image(&base);
+    let test2 = test1.to_gray_image();
+    test2.save("quick_check.png").unwrap();
+
+    assert_eq!(subtract_and_compare(&base, &test2),0);
+}
+
+#[test]
 fn test_subtraction(){
     let test1 = image::open("tests/truth/Gauss_Blur/gauss2d_boy_r1.2.png").unwrap().to_luma8();
-    let test2 = image::open("tests/truth/Gauss_Blur/gauss2d_boy_r1.2.png").unwrap().to_luma8();
+    let test2 = image::open("tests/truth/Gauss_Blur/gauss2d_boy_r1.8.png").unwrap().to_luma8();
 
     assert_eq!(subtract_and_compare(&test1, &test2),0);
 }
