@@ -1,0 +1,1 @@
+Fun personal project where I implement the fundamental linear algebra necessary for image processing. Yeah there is already a crate that does these things, but I like my planned solution better and it is a great review/learning experience. Super big stretch goal would be implementing something like SIFT, SURF and Fourier transforms. 
