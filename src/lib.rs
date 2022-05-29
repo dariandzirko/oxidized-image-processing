@@ -23,6 +23,7 @@ impl Kernel {
         Kernel {matrix, dimensions}
     }
     
+    // Function for debugging can probably do this a better way, by implementing a trait
     pub fn print_kernel(&self) {
 
         let (columns, rows) = self.dimensions;
@@ -36,6 +37,7 @@ impl Kernel {
         }
     }
 
+    // Returns the sum of all elements in a filter
     pub fn sum_kernel(&self) -> f32 {
         let mut sum = 0.0;
         
@@ -45,6 +47,7 @@ impl Kernel {
         return sum;
     }
 
+    // Not super necessary atm but good conceptualization of gaussians. Creates a 1d gaussian filt
     pub fn gaussian_1d(radius: f32) {
         let mut dummy_filt = Kernel::new();
 
@@ -71,6 +74,7 @@ impl Kernel {
         dummy_filt.dimensions = dimensions;
     }
 
+    //Creates a 2d gaussian blur filter
     pub fn gaussian_2d(radius: f32) -> Kernel {
         let mut dummy_filt = Kernel::new();
 
@@ -102,6 +106,7 @@ impl Kernel {
         return dummy_filt;
     }   
 
+    //Creates a highpass_2d by subtracting a gauss blur from a unity filter of the same size
     pub fn highpass_2d(radius: f32) -> Kernel {
         let mut dummy_filt = Kernel::gaussian_2d(radius);
 
@@ -116,6 +121,7 @@ impl Kernel {
         return dummy_filt;
     }
 
+    // Takes the highpass 2d filter divides by user determined constant. Then add that to unity, so that it can sharpen around the center/focus pixel.
     pub fn sharpening_2d(radius:f32, beta: f32) -> Kernel {
         let mut dummy_filt = Kernel::highpass_2d(radius);
 
@@ -130,6 +136,7 @@ impl Kernel {
         return dummy_filt;
     }
 
+    //Test filter used to make sure 1. I can make filters and 2. that my convolution works
     pub fn test_sobel() -> Kernel {
         let mut dummy_filt = Kernel::new();
 
@@ -138,7 +145,7 @@ impl Kernel {
         return dummy_filt;
     }
 
-    // Dimensions is only one of 2 things because kernels are 2d
+    // Dimensions/Direction can only one of 2 because kernels are 2d
     //TODO flip should probably just flip in 1 dimension with an option to flip in both. So like dimension = 0 would be like along the 
     //TODO x or columns, dimension = 1 would be along y or rows and dimension = 2 would be both or some shit. Or even make a 2d flip idk
     pub fn flip(& self, dimension: usize) -> Kernel {
@@ -151,11 +158,12 @@ impl Kernel {
             mat.reverse();
         }
 
-        //TODO implement some sort of copy or clone trait or some shit idk 
+        //TODO implement some sort of copy or clone trait or something idk 
         Kernel {matrix: mat, dimensions: dims}
     }
 }
 
+// A function that returns a Result containing the max number in a vector or None if the array is empty
 fn max_vec_f32(veccy: &Vec<f32>) -> Option<f32> {
     
     let mut max = None;
@@ -174,6 +182,7 @@ fn max_vec_f32(veccy: &Vec<f32>) -> Option<f32> {
     max
 }
 
+//Same as the above but returns the min of a vector if there is one
 fn min_vec_f32(veccy: &Vec<f32>) -> Option<f32> {
     
     let mut min = None;
@@ -206,7 +215,7 @@ pub struct Image {
     max: f32,
 }
 
-//Trying to implement these things because Shane thought it would be cool
+//Trying to implement these things because thought it would be cool turns out it is really hard
 // impl GenericImageView for Image {
 //     type Pixel = Pixel;
 
@@ -237,6 +246,7 @@ pub struct Image {
 
 impl Image {
 
+    //Creating an image from a matrix of values. Only works with 2d matrices because multiple channels is a lot of book keeping
     pub fn from_vec(matrix: Vec<f32>, channels: u32, height: u32, width: u32 ) -> Self {
 
         Self {
@@ -251,7 +261,7 @@ impl Image {
         }
     }
 
-    //This is just proof of concept. Not worrying about channels
+    //This is just proof of concept. Not worrying about channels. Creates one of my own images from a GrayImage from the image crate
     pub fn from_gray_image(base: & GrayImage) -> Self {
 
         let (base_cols, base_rows) = base.dimensions();
@@ -273,6 +283,7 @@ impl Image {
         }
     }
     
+    // Not completely implemented yet but it's the start of creating my own image type from an RGB image. 
     pub fn from_RGB_image(base: &RgbImage) -> Self {
         todo!();
         let (base_cols, base_rows) = base.dimensions();
@@ -294,6 +305,8 @@ impl Image {
         }
     }
     
+    // Returns the resulting image from when you subtract a smaller or equal size image from a larger or equal size image. If the dimensions do not work out 
+    //like that it will return an error. This function took way too long to get working. 
     pub fn subtract_images(&self, other: Image) -> Result<Image, std::io::Error> {
 
         if self.width>=other.width && self.height>=other.height {
@@ -321,11 +334,13 @@ impl Image {
     // r5, g5, b5, a5 | r6, g6, b6, a6 | r7, g7, b7, a7 | r8, g8, b8, a8,
     // r9, g9, b9, a9 | r10, g10, b10, a10 | r11, g11, b11, a11 | r12, g12, b12, a12, 
 
+    //Function to return a singular value from my custom image type. Needed to do some book keeping since my implimentation is all 1d vectors
     pub fn get_pixel(&self, x: u32, y: u32, z: u32) -> f32 {
         //probably is wrong 
         *self.matrix.get( (x*self.width + z + y*self.height) as usize).unwrap()
     }
 
+    // The function name should probably change? Either way this will scale the current values of my image to all be within 0 to 255
     pub fn scale_image(&mut self) {
 
         // range: 100 - 400
@@ -342,6 +357,7 @@ impl Image {
     //           0 1 2 3 | 0 1 2  3
     // 0 1 2 3 | 4 5 6 7 | 8 9 10 11 
 
+    // Converts my custom image type back to a Grayimage from the image crate so I can save and display my image
     pub fn to_gray_image(&mut self) -> GrayImage { 
         
         self.scale_image();
@@ -360,7 +376,9 @@ impl Image {
     }
 }
 
-//TODO This return type is a little cursed 
+// Takes a kernel/filter and an image then convolves the two returning the result of that convolution as the resultant image
+//TODO This return type is a little wacky. Impliment it for my custom type
+//TODO Also do some proper size/ pre checks to make sure the convolution is cool. Can't think of what those would be right now.
 pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 
     //TODO I think my rows and columns are backwards
@@ -415,7 +433,7 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
                 }
             }
 
-            // Scaling is fucking cursed
+            // Scaling is sad another +1 for my image type
             if sum > max_value {
                 max_value = sum;
             }            
@@ -441,13 +459,13 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
         }
     }
 
-    // This is a bunch of whore code written by a whore 
+    // This is a bunch of bad code written by a bad guy 
     //
-    // Okay so uint8 is just rounding all the fucking negatives to 0, so attempting to scale negative
+    // Okay so uint8 is just rounding all the negatives to 0, so attempting to scale negative
     // Numbers by a minimum convolution summation value (ie. -121) will just result in an image
     // with no real information because half of the values were set to 0 in the convolution calculation.
     // So there will be no "depth" or "content" most of that was already thrown out
-    // For now I will just add by 128 above if therer is a negative.
+    // For now I will just add by 128 above if there is a negative.
     #[cfg(ignore)]
     {
 
@@ -489,6 +507,9 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage{
 //You typically will want to the raw integral image. In this case the value holder. 
 //So probably should return both. When creating the haar filter use value holder
 //not result. Right now I will return the integral image 
+//Takes an image and returns the integral image.
+//TODO Impliment this for my custom image type
+//TODO make the normalization a flag to see what one you return not just commented code
 pub fn integral_image(base: &GrayImage) -> Vec<Vec<f32>> {
 
     let (base_cols, base_rows) = base.dimensions();
@@ -526,7 +547,8 @@ pub fn integral_image(base: &GrayImage) -> Vec<Vec<f32>> {
     return value_holder;
 }
 
-// This is a bad solution but fuck em for the time being
+// This is a bad solution but whatever for the time being
+/// Performs the integral image operation on a matrix
 pub fn integral_image_matrix(base: Vec<Vec<f32>> ) -> Vec<Vec<f32>> {
 
     let base_rows = base.len();
@@ -547,6 +569,8 @@ pub fn integral_image_matrix(base: Vec<Vec<f32>> ) -> Vec<Vec<f32>> {
     return value_holder;
 }
 
+//Uses the above integral image functionality to apply ONLY a Rectangular haar filter to the image
+//TODO do some checking on the dimensions
 pub fn haar_filter(base: &GrayImage, Mh:u32, Mv:u32) -> GrayImage {
     let (base_cols, base_rows) = base.dimensions();
 
@@ -606,6 +630,7 @@ pub fn haar_filter(base: &GrayImage, Mh:u32, Mv:u32) -> GrayImage {
     return result;
 }
 
+//Takes a gray image and raises every value in the image to the power given
 pub fn image_raised_power(base: &GrayImage, power: f32 ) -> Vec<Vec<f32>>{ 
     let (base_cols, base_rows) = base.dimensions();
 
@@ -746,6 +771,7 @@ pub fn local_statistics(base: &GrayImage, window_height: u32, window_width: u32)
     return (result_standard_dev, result_mean);
 }
 
+//Subtract images function with better use in unit tests
 pub fn subtract_images(base: &GrayImage, secondary: &GrayImage) -> Result<GrayImage, std::io::Error> {
     
     let (base_cols, base_rows) = base.dimensions();
