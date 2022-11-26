@@ -129,7 +129,7 @@ impl Kernel {
         return dummy_filt;
     }
 
-    pub fn test_sobel() -> Kernel {
+    pub fn sobel() -> Kernel {
         let mut dummy_filt = Kernel::new();
 
         dummy_filt.matrix = vec![ vec![-1.0,-1.0,-1.0], vec![-1.0,8.0,-1.0], vec![-1.0,-1.0,-1.0]];
