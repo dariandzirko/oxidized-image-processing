@@ -140,14 +140,20 @@ impl Kernel {
         return dummy_filt;
     }
 
-    pub fn sobel() -> Kernel {
+    pub fn sobel_x_dir() -> Kernel {
         let mut dummy_filt = Kernel::new();
 
-        dummy_filt.matrix = vec![
-            vec![-1.0, -1.0, -1.0],
-            vec![-1.0, 8.0, -1.0],
-            vec![-1.0, -1.0, -1.0],
-        ];
+        dummy_filt.matrix = vec![vec![-1.0, -2.0, -1.0], vec![0, 0, 0], vec![1.0, 2.0, 1.0]];
+
+        dummy_filt.dimensions = (3, 3);
+
+        return dummy_filt;
+    }
+
+    pub fn sobel_y_dir() -> Kernel {
+        let mut dummy_filt = Kernel::new();
+
+        dummy_filt.matrix = vec![vec![-1.0, 0, 1.0], vec![-2.0, 0, 2.0], vec![-1.0, 0, 1.0]];
 
         dummy_filt.dimensions = (3, 3);
 
