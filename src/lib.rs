@@ -268,7 +268,7 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage 
                             .unwrap();
                     };
 
-                    sum = sum + flipped_kernel_elem * zero_padded_elem as f32;
+                    sum = sum + flipped_kernel_elem * (zero_padded_elem as f32);
                 }
             }
 
