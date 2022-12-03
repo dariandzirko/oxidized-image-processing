@@ -253,24 +253,16 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage 
 
                     let zero_padded_elem = if same_size {
                         *zero_pad_base
-                            .get_pixel(col + kernel_col, row + kernel_row)
+                            .get_pixel(
+                                col + kernel_col + kernel_cols / 2,
+                                row + kernel_row + kernel_rows / 2,
+                            )
                             .channels()
                             .get(0)
                             .unwrap();
                     } else {
                         *zero_pad_base
-                            .get_pixel(
-                                col + kernel_col + kernel_cols / 2,
-                                row + kernel_row + kernel_rows / 2,
-                            )
-                            .channels()
-                            .get(0)
-                            .unwrap();
-                        *zero_pad_base
-                            .get_pixel(
-                                col + kernel_col + kernel_cols / 2,
-                                row + kernel_row + kernel_rows / 2,
-                            )
+                            .get_pixel(col + kernel_col, row + kernel_row)
                             .channels()
                             .get(0)
                             .unwrap();
