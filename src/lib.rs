@@ -189,7 +189,7 @@ impl Kernel {
 }
 
 //TODO This return type is a little cursed
-pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage {
+pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage {
     //TODO I think my rows and columns are backwards
     //(width, height) everywhere
     let (base_cols, base_rows) = base.dimensions();
@@ -209,10 +209,17 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage {
 
     //Swap the bounds and the zero_padded_elem commented lines to either get the "true"
     //convolution or the same size convolution.
-    let result_cols = base_cols + kernel_cols - 1;
-    let result_rows = base_rows + kernel_rows - 1;
-    // let result_cols = base_cols;
-    // let result_rows = base_rows;
+    let result_cols = if same_size {
+        base_cols
+    } else {
+        base_cols + kernel_cols - 1
+    };
+
+    let result_rows = if same_size {
+        base_rows
+    } else {
+        base_rows + kernel_rows - 1
+    };
 
     let mut min_value = 1000.0;
     let mut max_value = -1000.0;
@@ -243,12 +250,31 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage) -> GrayImage {
                     let flipped_kernel_elem =
                         flipped_kernel.matrix[kernel_row as usize][kernel_col as usize];
                     //*This has to be a fucking war crime
-                    let zero_padded_elem = *zero_pad_base
-                        .get_pixel(col + kernel_col, row + kernel_row)
-                        .channels()
-                        .get(0)
-                        .unwrap();
-                    //let zero_padded_elem  = *zero_pad_base.get_pixel(col+kernel_col+kernel_cols/2, row+kernel_row+kernel_rows/2).channels().get(0).unwrap();
+
+                    let zero_padded_elem = if same_size {
+                        *zero_pad_base
+                            .get_pixel(col + kernel_col, row + kernel_row)
+                            .channels()
+                            .get(0)
+                            .unwrap();
+                    } else {
+                        *zero_pad_base
+                            .get_pixel(
+                                col + kernel_col + kernel_cols / 2,
+                                row + kernel_row + kernel_rows / 2,
+                            )
+                            .channels()
+                            .get(0)
+                            .unwrap();
+                        *zero_pad_base
+                            .get_pixel(
+                                col + kernel_col + kernel_cols / 2,
+                                row + kernel_row + kernel_rows / 2,
+                            )
+                            .channels()
+                            .get(0)
+                            .unwrap();
+                    };
 
                     sum = sum + flipped_kernel_elem * zero_padded_elem as f32;
                 }
