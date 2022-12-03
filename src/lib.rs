@@ -251,7 +251,7 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage 
                         flipped_kernel.matrix[kernel_row as usize][kernel_col as usize];
                     //*This has to be a fucking war crime
 
-                    let zero_padded_elem = if same_size {
+                    let zero_padded_elem: u8 = if same_size {
                         *zero_pad_base
                             .get_pixel(
                                 col + kernel_col + kernel_cols / 2,
@@ -259,16 +259,16 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage 
                             )
                             .channels()
                             .get(0)
-                            .unwrap();
+                            .unwrap()
                     } else {
                         *zero_pad_base
                             .get_pixel(col + kernel_col, row + kernel_row)
                             .channels()
                             .get(0)
-                            .unwrap();
+                            .unwrap()
                     };
 
-                    sum = sum + flipped_kernel_elem * (zero_padded_elem as f32);
+                    sum = sum + flipped_kernel_elem * zero_padded_elem as f32;
                 }
             }
 
