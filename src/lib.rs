@@ -140,7 +140,7 @@ impl Kernel {
         return dummy_filt;
     }
 
-    pub fn sobel_x_dir() -> Kernel {
+    pub fn sobel_y_dir() -> Kernel {
         let mut dummy_filt = Kernel::new();
 
         dummy_filt.matrix = vec![
@@ -154,7 +154,7 @@ impl Kernel {
         return dummy_filt;
     }
 
-    pub fn sobel_y_dir() -> Kernel {
+    pub fn sobel_x_dir() -> Kernel {
         let mut dummy_filt = Kernel::new();
 
         dummy_filt.matrix = vec![
