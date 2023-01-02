@@ -2,12 +2,8 @@ use core::panic;
 use image::{
     DynamicImage, GenericImageView, GrayImage, ImageBuffer, Luma, Pixel, Rgb, RgbImage, Rgba,
 };
-use ndarray::{array, Array1, Array2};
-use num::{self, pow, Float};
-use std::{
-    collections::btree_set::Difference, env::temp_dir, f32::consts::E, io::BufRead,
-    num::IntErrorKind, vec,
-};
+use ndarray::Array2;
+use std::f32::consts::E;
 
 //Going to start with assuming rectangular kernels
 pub struct Kernel {
@@ -48,12 +44,10 @@ impl Kernel {
 
         let mut sum = 0.0;
 
-        for (index, element) in matrix.iter_mut().enumerate() {
-            let x = index as f32 - (lim);
-            let val = E.powf(-(x.powf(2.0)) / (2.0 * radius.powf(2.0)));
-            *element = val;
-            sum += val;
-        }
+        matrix.indexed_iter_mut().for_each(|(index, item)| {
+            *item = E.powf(-(index.1 as f32 - (lim)).powf(2.0)) / (2.0 * radius.powf(2.0));
+            sum += *item;
+        });
 
         matrix.iter_mut().for_each(|item| *item = *item / sum);
 
@@ -72,17 +66,13 @@ impl Kernel {
 
         let mut sum = 0.0;
 
-        let a = matrix.iter();
-
-        for (row_num, mut array) in matrix.rows_mut().into_iter().enumerate() {
-            let x = row_num as f32 - lim;
-            for (col_num, element) in array.iter_mut().enumerate() {
-                let y = col_num as f32 - lim;
-                let val = E.powf(-(x.powf(2.0) + y.powf(2.0)) / (2.0 * radius.powf(2.0)));
-                *element = val;
-                sum += val;
-            }
-        }
+        matrix.indexed_iter_mut().for_each(|(index, item)| {
+            *item = E.powf(
+                -((index.0 as f32 - lim).powf(2.0) + (index.1 as f32 - lim).powf(2.0))
+                    / (2.0 * radius.powf(2.0)),
+            );
+            sum += *item;
+        });
 
         matrix.iter_mut().for_each(|item| *item = *item / sum);
 
@@ -166,11 +156,9 @@ impl Kernel {
 
         let (row, col) = self.matrix.dim();
 
-        for (row_num, array) in self.matrix.rows_mut().into_iter().enumerate() {
-            for (col_num, element) in array.iter().enumerate() {
-                dummy_filt.matrix[[row_num, col - col_num]] = *element;
-            }
-        }
+        self.matrix
+            .indexed_iter_mut()
+            .for_each(|(index, item)| dummy_filt.matrix[[index.0, col - index.1]] = *item);
 
         return dummy_filt;
     }
@@ -180,11 +168,9 @@ impl Kernel {
 
         let (row, col) = self.matrix.dim();
 
-        for (row_num, array) in self.matrix.rows_mut().into_iter().enumerate() {
-            for (col_num, element) in array.iter().enumerate() {
-                dummy_filt.matrix[[row - row_num, col_num]] = *element;
-            }
-        }
+        self.matrix
+            .indexed_iter_mut()
+            .for_each(|(index, item)| dummy_filt.matrix[[row - index.0, index.1]] = *item);
 
         return dummy_filt;
     }
