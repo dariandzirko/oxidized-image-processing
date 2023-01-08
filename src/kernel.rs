@@ -3,7 +3,7 @@ use std::f32::consts::E;
 
 //Going to start with assuming rectangular kernels
 pub struct Kernel {
-    matrix: Array2<f32>,
+    pub matrix: Array2<f32>,
 }
 
 impl Kernel {
