@@ -170,7 +170,7 @@ impl Kernel {
 
     // Dimensions is only one of 2 things because kernels are 2d
     //TODO flip should probably just flip in 1 dimension with an option to flip in both. So like dimension = 0 would be like along the
-    //TODO x or columns, dimension = 1 would be along y or rows and dimension = 2 would be both or some shit. Or even make a 2d flip idk
+    //TODO x or columns, dimension = 1 would be along y or rows and dimension = 2 would be both or something. Or even make a 2d flip idk
     pub fn flip(&self, dimension: usize) -> Kernel {
         let mut mat = self.matrix.clone();
         let dims = self.dimensions;
@@ -180,7 +180,7 @@ impl Kernel {
             mat.reverse();
         }
 
-        //TODO implement some sort of copy or clone trait or some shit idk
+        //TODO implement some sort of copy or clone trait
         Kernel {
             matrix: mat,
             dimensions: dims,
@@ -249,7 +249,7 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage 
                 for kernel_col in 0..kernel_cols {
                     let flipped_kernel_elem =
                         flipped_kernel.matrix[kernel_row as usize][kernel_col as usize];
-                    //*This has to be a fucking war crime
+                    //*This has to be not the best way to do this
 
                     let zero_padded_elem: u8 = if same_size {
                         *zero_pad_base
@@ -272,7 +272,7 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage 
                 }
             }
 
-            // Scaling is fucking cursed
+            // Scaling is hard
             if sum > max_value {
                 max_value = sum;
             }
@@ -298,9 +298,7 @@ pub fn conv_2d(kernel: &Kernel, base: &GrayImage, same_size: bool) -> GrayImage 
         }
     }
 
-    // This is a bunch of whore code written by a whore
-    //
-    // Okay so uint8 is just rounding all the fucking negatives to 0, so attempting to scale negative
+    // Okay so uint8 is just rounding all the negatives to 0, so attempting to scale negative
     // Numbers by a minimum convolution summation value (ie. -121) will just result in an image
     // with no real information because half of the values were set to 0 in the convolution calculation.
     // So there will be no "depth" or "content" most of that was already thrown out
@@ -381,7 +379,7 @@ pub fn integral_image(base: &GrayImage) -> Vec<Vec<f32>> {
     return value_holder;
 }
 
-// This is a bad solution but fuck em for the time being
+// This is a bad solution but whatever
 pub fn integral_image_matrix(base: Vec<Vec<f32>>) -> Vec<Vec<f32>> {
     let base_rows = base.len();
     let base_cols = base[0].len();
