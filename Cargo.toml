@@ -7,15 +7,12 @@ resolver = "2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-image={ version = "0.24.0" }
+image = { version = "0.24.0" }
 num = "0.4"
+ndarray = "0.15.6"
 
 [profile.release]
 debug = true
-
-[[bin]]
-name = "oxidized_image_processing"
-src = "src/main.rs"
 
 [lib]
 name = "oxidized_image_processing"
