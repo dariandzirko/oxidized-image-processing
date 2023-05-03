@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-pub mod float_image;
-pub mod kernel;
-=======
 use core::panic;
 use image::{
     DynamicImage, GenericImageView, GrayImage, ImageBuffer, Luma, Pixel, Rgb, RgbImage, Rgba,
@@ -680,4 +676,3 @@ pub fn subtract_images(
         return Err(std::io::ErrorKind::InvalidInput.into());
     }
 }
->>>>>>> main
