@@ -1,5 +1,7 @@
 pub mod float_image;
+pub mod helper_ops;
 pub mod kernel;
+
 use core::panic;
 use image::{
     DynamicImage, GenericImageView, GrayImage, ImageBuffer, Luma, Pixel, Rgb, RgbImage, Rgba,
