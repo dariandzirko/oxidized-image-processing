@@ -80,6 +80,10 @@ pub fn conv_2d(filter: Kernel, image: FloatImage, same_size: bool) -> FloatImage
     FloatImage::new(matrix)
 }
 
+// pub conv_2d(filter: Array2, image: Array2) {
+
+// }
+
 pub fn integral_image() {}
 pub fn integral_image_matrix() {}
 pub fn haar_filter() {}
