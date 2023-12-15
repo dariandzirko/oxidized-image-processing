@@ -1,10 +1,12 @@
-use ndarray::{iter::IterMut, Array2, Axis};
+use ndarray::Array2;
 
-// pub fn flip_x(&mut self) {
+// Some random github solution from the ndarray developers that I do not yet understand
+// let mut it = matrix.axis_iter_mut(Axis(0));
 
-//     self.matrix = flip_x(self.matrix);
-//
-// }
+// ndarray::Zip::from(it.nth(perm.0).unwrap())
+//     .and(it.nth(perm.1 - (perm.0 + 1)).unwrap())
+//     .apply(std::mem::swap);
+
 // row
 //
 // 1 2 3  c
@@ -34,21 +36,12 @@ pub fn flip_across_y(matrix: &mut Array2<f32>) {
             matrix.swap((row, col), (row, cols - 1 - col));
         })
     });
-
-    // Some random github solution from the ndarray developers
-    // let mut it = matrix.axis_iter_mut(Axis(0));
-
-    // ndarray::Zip::from(it.nth(perm.0).unwrap())
-    //     .and(it.nth(perm.1 - (perm.0 + 1)).unwrap())
-    //     .apply(std::mem::swap);
 }
 
-// pub fn flip_2d(&mut self) -> Kernel {
-//     let mut dummy_filt = self.flip_x();
-//     dummy_filt = dummy_filt.flip_y();
-
-//     return dummy_filt;
-// }
+pub fn flip_2d(matrix: &mut Array2<f32>) {
+    flip_across_x(matrix);
+    flip_across_y(matrix);
+}
 
 #[cfg(test)]
 mod test {
@@ -74,13 +67,11 @@ mod test {
     }
 
     #[test]
-    fn test_swap() {
+    fn flip_across_x_twice() {
         let mut matrix = array![[1., 1., 1.], [2., 2., 2.], [3., 3., 3.]];
-        matrix.swap((0, 0), (1, 1));
-        // matrix.swap((2, 2), (1, 2));
-        let flipped_matrix = array![[2., 1., 1.], [2., 1., 2.], [3., 3., 3.]];
+        flip_across_x(&mut matrix);
+        flip_across_x(&mut matrix);
+        let flipped_matrix = array![[1., 1., 1.], [2., 2., 2.], [3., 3., 3.]];
         assert_eq!(matrix, flipped_matrix);
     }
-
-    // fn flip_across_x_twice() {}
 }
