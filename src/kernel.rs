@@ -1,20 +1,39 @@
-use ndarray::Array2;
+use ndarray::{array, Array2};
+
 use std::f32::consts::E;
+
+use crate::helper_ops::vec_of_vec_into_array2;
 
 //Going to start with assuming rectangular kernels
 pub struct Kernel {
-    pub matrix: Array2<f32>,
+    //Maybe ndarray will be a lot faster here
+    //TODO look into ndarray
+    matrix: Array2<f32>,
+    // Create a window with default options and display the image.
+    dimensions: (usize, usize), //row, col
 }
 
 impl Kernel {
-    //How do I return nothing from this
+    //How do I return nothing instead of an 1,1 matrix? Option on the constructor?
     pub fn new() -> Kernel {
-        let matrix = Array2::<f32>::zeros((0, 0));
+        let matrix = array![[0.0]];
         // Should keep the dimensions as (width, height) to match the library
-        Kernel { matrix }
+        let dimensions = (1, 1);
+        Kernel { matrix, dimensions }
     }
 
+    //Work on this func
     pub fn print_kernel(&self) {
+        // let (rows, cols) = self.dimensions;
+
+        // println!();
+        // for row in 0..rows {
+        //     for col in 0..cols {
+        //         print!("{:?} | ", self.matrix.get((row, col)));
+        //     }
+        //     println!();
+        // }
+
         println!("The kernel is {:?}", self.matrix);
         println!("With dimensions {:?}", self.matrix.dim());
     }
@@ -27,9 +46,9 @@ impl Kernel {
         return sum;
     }
 
+    //This is not 100% yet at the moment, the other specific filters won't be either I don't think
+    //should document the use case of radius here, it is basically an i32
     pub fn gaussian_1d(radius: f32) -> Kernel {
-        let mut dummy_filt = Kernel::new();
-
         let lim = 3.0 * (radius.floor() as f32);
         let length = (2.0 * lim + 1.0) as usize;
 
@@ -44,14 +63,13 @@ impl Kernel {
 
         matrix.iter_mut().for_each(|item| *item = *item / sum);
 
-        dummy_filt.matrix = matrix;
-
-        return dummy_filt;
+        Kernel {
+            matrix: matrix,
+            dimensions: (1, length),
+        }
     }
 
     pub fn gaussian_2d(radius: f32) -> Kernel {
-        let mut dummy_filt = Kernel::new();
-
         let lim = (3.0 * radius).floor() as f32;
         let length = (2.0 * lim + 1.0) as usize;
 
@@ -69,15 +87,16 @@ impl Kernel {
 
         matrix.iter_mut().for_each(|item| *item = *item / sum);
 
-        dummy_filt.matrix = matrix;
-
-        return dummy_filt;
+        Kernel {
+            matrix: matrix,
+            dimensions: (length, length),
+        }
     }
 
     pub fn highpass_2d(radius: f32) -> Kernel {
         let mut dummy_filt = Kernel::gaussian_2d(radius);
 
-        let lim = (dummy_filt.matrix.dim().0 - 1) / 2;
+        let lim = (dummy_filt.dimensions.0 - 1) / 2;
 
         dummy_filt
             .matrix
@@ -102,76 +121,20 @@ impl Kernel {
     }
 
     pub fn sobel_y_dir() -> Kernel {
-        let mut dummy_filt = Kernel::new();
+        let matrix = array![[1., 2., 1.], [0., 0., 0.], [-1., -2., -1.]];
 
-        // Why does this not work >:\
-        // dummy_filt.matrix.row_mut(0) = array![1.0, 2.0, 1.0].into_owned();
-        // dummy_filt.matrix.row_mut(1) = array![0.0, 0.0, 0.0].into_owned();
-        // dummy_filt.matrix.row_mut(2) = array![-1.0, -2.0, -1.0].into_owned();
-
-        //Row 0
-        dummy_filt.matrix.row_mut(0)[0] = 1.0;
-        dummy_filt.matrix.row_mut(0)[1] = 2.0;
-        dummy_filt.matrix.row_mut(0)[2] = 1.0;
-        //Row 1
-        dummy_filt.matrix.row_mut(1)[0] = 0.0;
-        dummy_filt.matrix.row_mut(1)[1] = 0.0;
-        dummy_filt.matrix.row_mut(1)[2] = 0.0;
-        //Row 2
-        dummy_filt.matrix.row_mut(2)[0] = -1.0;
-        dummy_filt.matrix.row_mut(2)[1] = -2.0;
-        dummy_filt.matrix.row_mut(2)[2] = -1.0;
-
-        return dummy_filt;
+        Kernel {
+            matrix,
+            dimensions: (3, 3),
+        }
     }
 
     pub fn sobel_x_dir() -> Kernel {
-        let mut dummy_filt = Kernel::new();
+        let matrix = array![[1., 0., -1.], [2., 0., -2.], [1., 0., -1.]];
 
-        //col 0
-        dummy_filt.matrix.column_mut(0)[0] = 1.0;
-        dummy_filt.matrix.column_mut(0)[1] = 2.0;
-        dummy_filt.matrix.column_mut(0)[2] = 1.0;
-        //col 1
-        dummy_filt.matrix.column_mut(1)[0] = 0.0;
-        dummy_filt.matrix.column_mut(1)[1] = 0.0;
-        dummy_filt.matrix.column_mut(1)[2] = 0.0;
-        //col 2
-        dummy_filt.matrix.column_mut(2)[0] = -1.0;
-        dummy_filt.matrix.column_mut(2)[1] = -2.0;
-        dummy_filt.matrix.column_mut(2)[2] = -1.0;
-
-        return dummy_filt;
-    }
-
-    pub fn flip_x(&mut self) -> Kernel {
-        let mut dummy_filt = Kernel::new();
-
-        let (row, col) = self.matrix.dim();
-
-        self.matrix
-            .indexed_iter_mut()
-            .for_each(|(index, item)| dummy_filt.matrix[[index.0, col - index.1]] = *item);
-
-        return dummy_filt;
-    }
-
-    pub fn flip_y(&mut self) -> Kernel {
-        let mut dummy_filt = Kernel::new();
-
-        let (row, col) = self.matrix.dim();
-
-        self.matrix
-            .indexed_iter_mut()
-            .for_each(|(index, item)| dummy_filt.matrix[[row - index.0, index.1]] = *item);
-
-        return dummy_filt;
-    }
-
-    pub fn flip_2d(&mut self) -> Kernel {
-        let mut dummy_filt = self.flip_x();
-        dummy_filt = dummy_filt.flip_y();
-
-        return dummy_filt;
+        Kernel {
+            matrix,
+            dimensions: (3, 3),
+        }
     }
 }

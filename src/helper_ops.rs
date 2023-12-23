@@ -209,7 +209,7 @@ pub fn conv_2d(kernel: &Array2<f32>, base: &Array2<f32>, same_size: bool) -> Arr
 //You typically will want to the raw integral image. In this case the value holder.
 //So probably should return both. When creating the haar filter use value holder
 //not result. Right now I will return the integral image
-pub fn integral_image(base: &Array2<f32>) -> Vec<Vec<f32>> {
+pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
     let (base_cols, base_rows) = base.dimensions();
 
     let mut result = GrayImage::new(base_cols, base_rows);
@@ -337,6 +337,7 @@ pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
 
     let mut float_result = vec![vec![0.0; base_cols as usize]; base_rows as usize];
 
+    //this should be an iterator
     for row in 0..base_rows {
         for col in 0..base_cols {
             float_result[row as usize][col as usize] =
