@@ -44,17 +44,18 @@ pub fn flip_2d(matrix: &mut Array2<f32>) {
 }
 
 //These could just be the same type T instead of f32
-pub fn vec_of_vec_into_array2(
-    matrix: &mut Vec<Vec<f32>>,
-    dimensions: (usize, usize),
-) -> Array2<f32> {
-    let temp: Array1<f32> = matrix
-        .into_iter()
-        .flat_map(|item| item.into_iter())
-        .collect();
+//Do I even neeed this function
+// pub fn vec_of_vec_into_array2(
+//     matrix: &mut Vec<Vec<f32>>,
+//     dimensions: (usize, usize),
+// ) -> Array2<f32> {
+//     let temp: Array1<f32> = matrix
+//         .into_iter()
+//         .flat_map(|item| item.into_iter())
+//         .collect();
 
-    temp.into_shape(dimensions).unwrap()
-}
+//     temp.into_shape(dimensions).unwrap()
+// }
 
 //TODO This return type is a little cursed
 pub fn conv_2d(kernel: &Array2<f32>, base: &Array2<f32>, same_size: bool) -> Array2<f32> {

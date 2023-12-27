@@ -71,22 +71,14 @@ impl FloatImage {
     }
 }
 
-pub fn conv_2d(filter: Kernel, image: FloatImage, same_size: bool) -> FloatImage {
-    let (filter_col_num, filter_row_num) = filter.matrix.dim();
-    let (image_col_num, image_row_num) = image.matrix.dim();
-
-    let mut matrix = Array2::<f32>::zeros((image_row_num as usize, image_col_num as usize));
-
-    FloatImage::new(matrix)
-}
+// I think these shoudln't exist and it should just all essentially be help_ops that perform all the math on Array2<f32>
+// pub fn conv_2d(filter: Kernel, image: FloatImage, same_size: bool) -> FloatImage {}
 
 // pub conv_2d(filter: Array2, image: Array2) {
 
-// }
-
-pub fn integral_image() {}
-pub fn integral_image_matrix() {}
-pub fn haar_filter() {}
-pub fn image_raised_power() {}
-pub fn local_statistics() {}
-pub fn subtract_image() {}
+// pub fn integral_image() {}
+// pub fn integral_image_matrix() {}
+// pub fn haar_filter() {}
+// pub fn image_raised_power() {}
+// pub fn local_statistics() {}
+// pub fn subtract_image() {}

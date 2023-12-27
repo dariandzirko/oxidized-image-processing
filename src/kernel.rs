@@ -2,8 +2,6 @@ use ndarray::{array, Array2};
 
 use std::f32::consts::E;
 
-use crate::helper_ops::vec_of_vec_into_array2;
-
 //Going to start with assuming rectangular kernels
 pub struct Kernel {
     //Maybe ndarray will be a lot faster here
