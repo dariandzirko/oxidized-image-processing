@@ -1,24 +1,5 @@
 use ndarray::{Array1, Array2};
 
-use crate::kernel;
-
-// Some random github solution from the ndarray developers that I do not yet understand
-// let mut it = matrix.axis_iter_mut(Axis(0));
-
-// ndarray::Zip::from(it.nth(perm.0).unwrap())
-//     .and(it.nth(perm.1 - (perm.0 + 1)).unwrap())
-//     .apply(std::mem::swap);
-
-// row
-//
-// 1 2 3  c
-// 4 5 6  o
-// 7 8 9  l
-//--- flip x ---
-// 7 8 9
-// 4 5 6
-// 1 2 3
-
 //Make these 2 accept more generic primitive types
 pub fn flip_across_x(matrix: &mut Array2<f32>) {
     let (rows, cols) = matrix.dim();
@@ -45,27 +26,12 @@ pub fn flip_2d(matrix: &mut Array2<f32>) {
     flip_across_y(matrix);
 }
 
-//These could just be the same type T instead of f32
-//Do I even neeed this function
-// pub fn vec_of_vec_into_array2(
-//     matrix: &mut Vec<Vec<f32>>,
-//     dimensions: (usize, usize),
-// ) -> Array2<f32> {
-//     let temp: Array1<f32> = matrix
-//         .into_iter()
-//         .flat_map(|item| item.into_iter())
-//         .collect();
-
-//     temp.into_shape(dimensions).unwrap()
-// }
-
-//TODO This return type is a little cursed
-pub fn conv_2d(kernel: &Array2<f32>, base: &Array2<f32>, same_size: bool) -> Array2<f32> {
+pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) -> Array2<f32> {
     //(width, height) everywhere
 
     //BUUUUUUUUT I don't know if it is row col so this will get me the correct shape but I don't know what the order of the dimensions is
-    let base_shape = base.shape();
-    let kernel_shape = kernel.shape();
+    let base_shape = base.raw_dim();
+    let kernel_shape = kernel.raw_dim();
 
     //There has to be a way I can skip this step and just do the math with out this initialization
     let mut zero_pad_base = Array2::<f32>::zeros((
@@ -75,8 +41,10 @@ pub fn conv_2d(kernel: &Array2<f32>, base: &Array2<f32>, same_size: bool) -> Arr
 
     //overlay base onto the zero pad
     base.indexed_iter().for_each(|(index, item)| {
-        zero_pad_base[(index.0 + kernel_shape[0], index.1 + kernel_shape[1])] = *item;
+        zero_pad_base[(index.0 + kernel_shape[0] - 1, index.1 + kernel_shape[1] - 1)] = *item;
     });
+
+    println!("zero_pad_base {}", zero_pad_base);
 
     //Can change shape if I want to return a "same size" convolution image, so the dimensions would just be base_shape
     let mut result = Array2::<f32>::zeros((
@@ -85,23 +53,24 @@ pub fn conv_2d(kernel: &Array2<f32>, base: &Array2<f32>, same_size: bool) -> Arr
     ));
 
     //flipping the kernel in both x and y
-    flip_2d(&mut kernel);
+    flip_2d(kernel);
 
     //Will not work for "3D" images, like RGB stuff, I would need an array 3 where the 3rd dimension would be the RGB dimenion and would need to rewrite
     //float images and kernels to all be able to handle the 3d stuff which might be worthwhile in the future
+
     result.indexed_iter_mut().for_each(|(index, item)| {
-        let mut sum: f32 = 0.0;
+        *item = 0.0;
         kernel
             .indexed_iter()
             .for_each(|(kernel_index, kernel_item)| {
-                sum += zero_pad_base
+                *item += zero_pad_base
                     .get((index.0 + kernel_index.0, index.1 + kernel_index.1))
                     .unwrap()
                     * kernel_item;
             });
-
-        item = &mut sum;
     });
+
+    result
 }
 
 //You typically will want to the raw integral image. In this case the value holder.

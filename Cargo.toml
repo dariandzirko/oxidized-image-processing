@@ -17,7 +17,3 @@ debug = true
 [lib]
 name = "oxidized_image_processing"
 src = "src/lib.rs"
-
-[[test]]
-name = "test"
-src = "test/test.rs"

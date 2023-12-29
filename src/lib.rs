@@ -1,4 +1,4 @@
-mod float_image;
-mod helper_ops;
-mod kernel;
-mod otsu;
+pub mod float_image;
+pub mod helper_ops;
+pub mod kernel;
+pub mod otsu;
