@@ -39,7 +39,16 @@ mod test {
         let base = array![[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]];
 
         let result = conv_2d(&mut kernel, &base, true);
-        println!("result {}", result);
+
+        let expected_result = array![
+            [1., 2., 3., 2., 1.],
+            [2., 4., 6., 4., 2.],
+            [3., 6., 9., 6., 3.],
+            [2., 4., 6., 4., 2.],
+            [1., 2., 3., 2., 1.]
+        ];
+
+        assert_eq!(result, expected_result);
     }
 
     #[test]
@@ -48,6 +57,15 @@ mod test {
         let base = array![[2., 4., 2.], [2., 5., 2.], [6., 8., 9.]];
 
         let result = conv_2d(&mut kernel, &base, true);
-        println!("result {}", result);
+
+        let expected_result = array![
+            [2., 10., 16., 10., 2.],
+            [4., 21., 35., 21., 4.],
+            [10., 47., 74., 56., 13.],
+            [8., 37., 58., 46., 11.],
+            [6., 26., 39., 35., 9.]
+        ];
+
+        assert_eq!(result, expected_result);
     }
 }

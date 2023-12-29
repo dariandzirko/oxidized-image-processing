@@ -44,8 +44,6 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) ->
         zero_pad_base[(index.0 + kernel_shape[0] - 1, index.1 + kernel_shape[1] - 1)] = *item;
     });
 
-    println!("zero_pad_base {}", zero_pad_base);
-
     //Can change shape if I want to return a "same size" convolution image, so the dimensions would just be base_shape
     let mut result = Array2::<f32>::zeros((
         base_shape[0] + (kernel_shape[0] - 1),
