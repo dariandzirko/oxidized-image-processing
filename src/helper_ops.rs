@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2};
+use ndarray::Array2;
 
 //Make these 2 accept more generic primitive types
 pub fn flip_across_x(matrix: &mut Array2<f32>) {
@@ -26,8 +26,9 @@ pub fn flip_2d(matrix: &mut Array2<f32>) {
     flip_across_y(matrix);
 }
 
-pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) -> Array2<f32> {
-    //(width, height) everywhere
+//Need to work on the same size functionality
+pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>) -> Array2<f32> {
+    //(width, height) or (cols, rows) everywhere
 
     //BUUUUUUUUT I don't know if it is row col so this will get me the correct shape but I don't know what the order of the dimensions is
     let base_shape = base.raw_dim();
@@ -40,6 +41,7 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) ->
     ));
 
     //overlay base onto the zero pad
+    //Should I break this out into a function? I might need something this again
     base.indexed_iter().for_each(|(index, item)| {
         zero_pad_base[(index.0 + kernel_shape[0] - 1, index.1 + kernel_shape[1] - 1)] = *item;
     });
@@ -55,9 +57,7 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) ->
 
     //Will not work for "3D" images, like RGB stuff, I would need an array 3 where the 3rd dimension would be the RGB dimenion and would need to rewrite
     //float images and kernels to all be able to handle the 3d stuff which might be worthwhile in the future
-
     result.indexed_iter_mut().for_each(|(index, item)| {
-        *item = 0.0;
         kernel
             .indexed_iter()
             .for_each(|(kernel_index, kernel_item)| {
@@ -73,64 +73,21 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) ->
 
 //You typically will want to the raw integral image. In this case the value holder.
 //So probably should return both. When creating the haar filter use value holder
-//not result. Right now I will return the integral image
-// pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
-//     let (base_cols, base_rows) = base.dimensions();
+//not result. Right now I will return the integral image/
+pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
+    let base_shape = base.raw_dim();
 
-//     let mut result = GrayImage::new(base_cols, base_rows);
-//     let mut value_holder: Vec<Vec<f32>> =
-//         vec![vec![0.0; (base_cols + 1) as usize]; (base_rows + 1) as usize];
+    let mut result = Array2::<f32>::zeros((base_shape[0] + 1, base_shape[1] + 1));
 
-//     let mut max: f32 = 0.0;
+    base.indexed_iter().for_each(|(index, _item)| {
+        result[[index.0 + 1, index.1 + 1]] = base.get((index.0, index.1)).unwrap()
+            + result.get((index.0, index.1 + 1)).unwrap()
+            + result.get((index.0 + 1, index.1)).unwrap()
+            - result.get((index.0, index.1)).unwrap()
+    });
 
-//     for row in 1..base_rows + 1 {
-//         for col in 1..base_cols + 1 {
-//             value_holder[row as usize][col as usize] =
-//                 *base.get_pixel(col - 1, row - 1).channels().get(0).unwrap() as f32
-//                     + value_holder[row as usize][(col - 1) as usize]
-//                     + value_holder[(row - 1) as usize][col as usize]
-//                     - value_holder[(row - 1) as usize][(col - 1) as usize];
-
-//             if value_holder[row as usize][col as usize] > max {
-//                 max = value_holder[row as usize][col as usize]
-//             }
-//         }
-//     }
-
-//     // Uncomment this if you want a normalize integral image not just a huge one
-//     // value_holder.iter_mut()
-//     // .flat_map(|row| row.iter_mut())
-//     // .for_each(|item| *item = *item/max*255.0);
-
-//     // for row in 0..base_rows {
-//     //     for col in 0..base_cols {
-//     //         let pixel: image::Luma::<u8> = image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
-//     //         result.put_pixel(col, row, pixel);
-//     //     }
-//     // }
-
-//     return value_holder;
-// }
-
-// // This is a bad solution but whatever
-// pub fn integral_image_matrix(base: Array2<f32>) -> Array2<f32> {
-//     let base_rows = base.len();
-//     let base_cols = base[0].len();
-
-//     let mut value_holder: Vec<Vec<f32>> =
-//         vec![vec![0.0; (base_cols + 1) as usize]; (base_rows + 1) as usize];
-
-//     for row in 1..base_rows + 1 {
-//         for col in 1..base_cols + 1 {
-//             value_holder[row as usize][col as usize] = base[(row - 1) as usize][(col - 1) as usize]
-//                 + value_holder[row as usize][(col - 1) as usize]
-//                 + value_holder[(row - 1) as usize][col as usize]
-//                 - value_holder[(row - 1) as usize][(col - 1) as usize];
-//         }
-//     }
-
-//     return value_holder;
-// }
+    return result;
+}
 
 // pub fn haar_filter(base: &Array2<f32>, Mh: u32, Mv: u32) -> Array2<f32> {
 //     let (base_cols, base_rows) = base.dimensions();
@@ -197,21 +154,15 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) ->
 //     return result;
 // }
 
-// pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
-//     let (base_cols, base_rows) = base.dimensions();
+pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
+    let mut result = Array2::<f32>::zeros(base.raw_dim());
 
-//     let mut float_result = vec![vec![0.0; base_cols as usize]; base_rows as usize];
+    base.indexed_iter().for_each(|(index, item)| {
+        result[index] = item.powf(power);
+    });
 
-//     //this should be an iterator
-//     for row in 0..base_rows {
-//         for col in 0..base_cols {
-//             float_result[row as usize][col as usize] =
-//                 (*base.get_pixel(col, row).channels().get(0).unwrap() as f32).powf(power);
-//         }
-//     }
-
-//     return float_result;
-// }
+    return result;
+}
 
 // // Return order is standard dev iamge first and mean image second
 // pub fn local_statistics(

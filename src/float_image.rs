@@ -1,10 +1,5 @@
-use image::{
-    DynamicImage, GenericImageView, GrayImage, ImageBuffer, Luma, Pixel, Rgb, RgbImage, Rgba,
-};
+use image::{GrayImage, Pixel};
 use ndarray::Array2;
-use num::Float;
-
-use crate::kernel::{self, Kernel};
 
 pub struct FloatImage {
     matrix: Array2<f32>,
@@ -52,6 +47,13 @@ impl FloatImage {
                 self.max = *item;
             }
         })
+    }
+
+    //First it will functionaly scale between 0 and 1 then it will just multiply the fraction by the desired constant
+    pub fn scale_to_constant(&mut self, constant: f32) {
+        self.matrix
+            .iter_mut()
+            .for_each(|item| *item = (*item - self.min) / (self.max - self.min) * constant);
     }
 
     pub fn to_luma8(&self) -> GrayImage {
