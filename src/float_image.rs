@@ -2,7 +2,7 @@ use image::{GrayImage, Pixel};
 use ndarray::Array2;
 
 pub struct FloatImage {
-    matrix: Array2<f32>,
+    pub matrix: Array2<f32>,
     min: f32,
     max: f32,
 }
@@ -32,7 +32,7 @@ impl FloatImage {
 
         image.enumerate_pixels().for_each(|(row, col, pixel)| {
             pixel_value = *pixel.channels().get(0).unwrap() as f32;
-            matrix[[row as usize, col as usize]] = pixel_value;
+            matrix[[col as usize, row as usize]] = pixel_value;
         });
 
         FloatImage::new(matrix)
@@ -73,14 +73,5 @@ impl FloatImage {
     }
 }
 
-// I think these shoudln't exist and it should just all essentially be help_ops that perform all the math on Array2<f32>
-// pub fn conv_2d(filter: Kernel, image: FloatImage, same_size: bool) -> FloatImage {}
-
-// pub conv_2d(filter: Array2, image: Array2) {
-
-// pub fn integral_image() {}
-// pub fn integral_image_matrix() {}
-// pub fn haar_filter() {}
-// pub fn image_raised_power() {}
 // pub fn local_statistics() {}
 // pub fn subtract_image() {}

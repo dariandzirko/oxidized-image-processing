@@ -71,9 +71,6 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>) -> Array2<f32> {
     result
 }
 
-//You typically will want to the raw integral image. In this case the value holder.
-//So probably should return both. When creating the haar filter use value holder
-//not result. Right now I will return the integral image/
 pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
     let base_shape = base.raw_dim();
 
@@ -89,70 +86,71 @@ pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
     return result;
 }
 
-// pub fn haar_filter(base: &Array2<f32>, Mh: u32, Mv: u32) -> Array2<f32> {
-//     let (base_cols, base_rows) = base.dimensions();
+pub fn haar_filter(base: &Array2<f32>, Mh: usize, Mv: usize) -> Array2<f32> {
+    let base_shape = base.raw_dim();
 
-//     let offset_row = Mv / 2;
-//     let offset_col = Mh;
+    let offset_row = Mv / 2;
+    let offset_col = Mh;
 
-//     let mut zero_pad_base = GrayImage::new(base_cols + 2 * offset_col, base_rows + 2 * offset_row);
-//     image::imageops::overlay(
-//         &mut zero_pad_base,
-//         base,
-//         offset_col as i64,
-//         offset_row as i64,
-//     );
+    let mut zero_pad_base = Array2::<f32>::zeros((
+        base_shape[0] + 2 * offset_col,
+        base_shape[1] + 2 * offset_row,
+    ));
 
-//     let mut value_holder: Vec<Vec<f32>> = vec![vec![0.0; base_cols as usize]; base_rows as usize];
-//     let mut result = GrayImage::new(base_cols, base_rows);
+    base.indexed_iter().for_each(|(index, item)| {
+        zero_pad_base[(index.0 + offset_col, index.1 + offset_row)] = *item;
+    });
 
-//     let integral_zero_pad_base = integral_image(&zero_pad_base);
+    let mut result = Array2::<f32>::zeros(base_shape);
 
-//     let mut gray = 0.0;
-//     let mut white = 0.0;
-//     let mut result_value = 0.0;
-//     let mut max = 0.0;
+    let integral_zero_pad_base = integral_image(&zero_pad_base);
 
-//     for row in 1..base_rows - 1 {
-//         for col in 0..base_cols {
-//             gray = integral_zero_pad_base[(row + Mv) as usize][(col + Mh) as usize]
-//                 - integral_zero_pad_base[(row + Mv) as usize][(col) as usize]
-//                 - integral_zero_pad_base[row as usize][(col + Mh) as usize]
-//                 + integral_zero_pad_base[row as usize][col as usize];
+    let mut gray = 0.0;
+    let mut white = 0.0;
 
-//             white = integral_zero_pad_base[(row + Mv) as usize][(col + 2 * Mh) as usize]
-//                 - integral_zero_pad_base[(row + Mv) as usize][(col + Mh) as usize]
-//                 - integral_zero_pad_base[row as usize][(col + 2 * Mh) as usize]
-//                 + integral_zero_pad_base[row as usize][(col + Mh) as usize];
+    result.indexed_iter_mut().for_each(|(index, item)| {
+        gray = integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
+            - integral_zero_pad_base[(index.0, index.1 + Mv)]
+            - integral_zero_pad_base[(index.0 + Mh, index.1)]
+            + integral_zero_pad_base[(index.0, index.1)];
 
-//             result_value = white - gray;
-//             value_holder[(row - 1) as usize][col as usize] = result_value;
+        white = integral_zero_pad_base[(index.0 + 2 * Mh, index.1 + Mv)]
+            - integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
+            - integral_zero_pad_base[(index.0 + 2 * Mh, index.1)]
+            + integral_zero_pad_base[(index.0 + Mh, index.1)];
 
-//             if max < result_value {
-//                 max = result_value;
-//             }
-//         }
-//     }
+        *item = white - gray;
+    });
 
-//     // let result_pixel: image::Luma::<u8> = image::Luma::<u8>([result_value]);
+    // for row in 1..base_rows - 1 {
+    //     for col in 0..base_cols {
+    //         gray = integral_zero_pad_base[(row + Mv) as usize][(col + Mh) as usize]
+    //             - integral_zero_pad_base[(row + Mv) as usize][(col) as usize]
+    //             - integral_zero_pad_base[row as usize][(col + Mh) as usize]
+    //             + integral_zero_pad_base[row as usize][col as usize];
 
-//     // result.put_pixel(col, row, result_pixel);
+    //         white = integral_zero_pad_base[(row + Mv) as usize][(col + 2 * Mh) as usize]
+    //             - integral_zero_pad_base[(row + Mv) as usize][(col + Mh) as usize]
+    //             - integral_zero_pad_base[row as usize][(col + 2 * Mh) as usize]
+    //             + integral_zero_pad_base[row as usize][(col + Mh) as usize];
+    //         result_value = white - gray;
+    //         value_holder[(row - 1) as usize][col as usize] = result_value;
+    //     }
+    // }
+    //     value_holder
+    //         .iter_mut()
+    //         .flat_map(|row| row.iter_mut())
+    //         .for_each(|item| *item = *item / max * 255.0 + 128.0);
+    //     for row in 0..base_rows {
+    //         for col in 0..base_cols {
+    //             let pixel: image::Luma<u8> =
+    //                 image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
+    //             result.put_pixel(col, row, pixel);
+    //         }
+    //     }
 
-//     value_holder
-//         .iter_mut()
-//         .flat_map(|row| row.iter_mut())
-//         .for_each(|item| *item = *item / max * 255.0 + 128.0);
-
-//     for row in 0..base_rows {
-//         for col in 0..base_cols {
-//             let pixel: image::Luma<u8> =
-//                 image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
-//             result.put_pixel(col, row, pixel);
-//         }
-//     }
-
-//     return result;
-// }
+    return result;
+}
 
 pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
     let mut result = Array2::<f32>::zeros(base.raw_dim());
