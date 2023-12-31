@@ -1,11 +1,12 @@
 use image::{self, GenericImageView, GrayImage, Luma, Pixel};
+use ndarray::Array2;
 
 struct GrayHistogram {
     histogram: [u32; 256],
     probabilities: [f32; 256],
 }
 
-fn make_grayhistrogram(image: &GrayImage) -> GrayHistogram {
+fn make_grayhistrogram(image: &Array2<f32>) -> GrayHistogram {
     let mut histogram = [0; 256];
     let mut probabilities = [0.0; 256];
 
@@ -31,7 +32,7 @@ fn make_grayhistrogram(image: &GrayImage) -> GrayHistogram {
     }
 }
 
-pub fn otsu_threshold(image: &GrayImage) -> f32 {
+pub fn otsu_threshold(image: &Array2<f32) -> f32 {
     let easy_histogram = make_grayhistrogram(image);
 
     //q1(k)
@@ -76,7 +77,7 @@ pub fn otsu_threshold(image: &GrayImage) -> f32 {
     return max;
 }
 
-pub fn otsu(image: &GrayImage) -> GrayImage {
+pub fn otsu(image: &Array2<f32) -> Array2<f32 {
     let (width, height) = image.dimensions();
     let mut result = GrayImage::new(width, height);
 
@@ -96,7 +97,7 @@ pub fn otsu(image: &GrayImage) -> GrayImage {
     result
 }
 
-pub fn otsu_filter_background(image: &GrayImage) -> GrayImage {
+pub fn otsu_filter_background(image: &Array2<f32) -> Array2<f32 {
     let (width, height) = image.dimensions();
     let mut result = GrayImage::new(width, height);
 

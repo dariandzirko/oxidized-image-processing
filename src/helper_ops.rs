@@ -136,143 +136,143 @@ pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
 }
 
 // // Return order is standard dev image first and mean image second
-// pub fn local_statistics(
-//     base: &Array2<f32>,
-//     window_height: u32,
-//     window_width: u32,
-// ) -> (Array2<f32>, Array2<f32>) {
-//     let (base_cols, base_rows) = base.dimensions();
+pub fn local_statistics(
+    base: &Array2<f32>,
+    window_height: u32,
+    window_width: u32,
+) -> (Array2<f32>, Array2<f32>) {
+    let (base_cols, base_rows) = base.dimensions();
 
-//     let mut zero_pad_base = GrayImage::new(base_cols + window_width, base_rows + window_height);
+    let mut zero_pad_base = GrayImage::new(base_cols + window_width, base_rows + window_height);
 
-//     image::imageops::overlay(
-//         &mut zero_pad_base,
-//         base,
-//         ((window_width + 1) / 2) as i64,
-//         ((window_height + 1) / 2) as i64,
-//     );
+    image::imageops::overlay(
+        &mut zero_pad_base,
+        base,
+        ((window_width + 1) / 2) as i64,
+        ((window_height + 1) / 2) as i64,
+    );
 
-//     let integral = integral_image(&zero_pad_base);
+    let integral = integral_image(&zero_pad_base);
 
-//     let base_squared = image_raised_power(&zero_pad_base, 2.0);
-//     let integral_squared = integral_image_matrix(base_squared);
+    let base_squared = image_raised_power(&zero_pad_base, 2.0);
+    let integral_squared = integral_image_matrix(base_squared);
 
-//     let mut mean_value_holder: Vec<Vec<f32>> =
-//         vec![vec![0.0; base_cols as usize]; base_rows as usize];
-//     let mut standard_dev_value_holder: Vec<Vec<f32>> =
-//         vec![vec![0.0; base_cols as usize]; base_rows as usize];
+    let mut mean_value_holder: Vec<Vec<f32>> =
+        vec![vec![0.0; base_cols as usize]; base_rows as usize];
+    let mut standard_dev_value_holder: Vec<Vec<f32>> =
+        vec![vec![0.0; base_cols as usize]; base_rows as usize];
 
-//     let mut result_mean = GrayImage::new(base_cols, base_rows);
-//     let mut result_standard_dev = GrayImage::new(base_cols, base_rows);
+    let mut result_mean = GrayImage::new(base_cols, base_rows);
+    let mut result_standard_dev = GrayImage::new(base_cols, base_rows);
 
-//     let mut num_of_elements_in_window;
-//     let mut window_sum;
-//     let mut squared_window_sum;
+    let mut num_of_elements_in_window;
+    let mut window_sum;
+    let mut squared_window_sum;
 
-//     let mut window_mean;
-//     let mut squared_window_mean;
+    let mut window_mean;
+    let mut squared_window_mean;
 
-//     let mut sigma;
-//     let mut sigma_squared;
+    let mut sigma;
+    let mut sigma_squared;
 
-//     let mut mean_max = 0.0;
-//     let mut standard_dev_max = 0.0;
+    let mut mean_max = 0.0;
+    let mut standard_dev_max = 0.0;
 
-//     for row in 0..base_rows {
-//         for col in 0..base_cols {
-//             num_of_elements_in_window = window_height * window_width;
+    for row in 0..base_rows {
+        for col in 0..base_cols {
+            num_of_elements_in_window = window_height * window_width;
 
-//             if row < (window_height / 2) {
-//                 num_of_elements_in_window -= (window_height / 2) + (row * window_height);
+            if row < (window_height / 2) {
+                num_of_elements_in_window -= (window_height / 2) + (row * window_height);
 
-//                 if col < (window_width / 2) {
-//                     num_of_elements_in_window -=
-//                         (window_width / 2 - col) * (window_width - window_height / 2 - row);
-//                 }
+                if col < (window_width / 2) {
+                    num_of_elements_in_window -=
+                        (window_width / 2 - col) * (window_width - window_height / 2 - row);
+                }
 
-//                 if row > base_cols - window_height / 2 {
-//                     num_of_elements_in_window -= (col + window_width / 2 - base_cols)
-//                         * (window_width - window_height / 2 - row);
-//                 }
-//             } else if row > base_rows - window_height / 2 {
-//                 num_of_elements_in_window -= (row + window_height / 2 - base_rows) * window_height;
+                if row > base_cols - window_height / 2 {
+                    num_of_elements_in_window -= (col + window_width / 2 - base_cols)
+                        * (window_width - window_height / 2 - row);
+                }
+            } else if row > base_rows - window_height / 2 {
+                num_of_elements_in_window -= (row + window_height / 2 - base_rows) * window_height;
 
-//                 if col < window_width / 2 {
-//                     num_of_elements_in_window -= (window_width / 2 - col)
-//                         * (window_width - (row + window_height / 2 - base_rows));
-//                 }
+                if col < window_width / 2 {
+                    num_of_elements_in_window -= (window_width / 2 - col)
+                        * (window_width - (row + window_height / 2 - base_rows));
+                }
 
-//                 if col > base_cols - window_height / 2 {
-//                     num_of_elements_in_window -= (col + window_width / 2 - base_cols)
-//                         * (window_width - (row + window_height / 2 - base_rows));
-//                 }
-//             } else {
-//                 if col < window_width / 2 {
-//                     num_of_elements_in_window -= (window_width / 2 - col) * window_width
-//                 }
+                if col > base_cols - window_height / 2 {
+                    num_of_elements_in_window -= (col + window_width / 2 - base_cols)
+                        * (window_width - (row + window_height / 2 - base_rows));
+                }
+            } else {
+                if col < window_width / 2 {
+                    num_of_elements_in_window -= (window_width / 2 - col) * window_width
+                }
 
-//                 if col > base_cols - window_width / 2 {
-//                     num_of_elements_in_window -=
-//                         (col + window_width / 2 - base_cols) * window_width;
-//                 }
-//             }
+                if col > base_cols - window_width / 2 {
+                    num_of_elements_in_window -=
+                        (col + window_width / 2 - base_cols) * window_width;
+                }
+            }
 
-//             window_sum = integral[(row + window_height) as usize][(col + window_width) as usize]
-//                 - integral[row as usize][(col + window_width) as usize]
-//                 - integral[(row + window_height) as usize][col as usize]
-//                 + integral[row as usize][col as usize];
+            window_sum = integral[(row + window_height) as usize][(col + window_width) as usize]
+                - integral[row as usize][(col + window_width) as usize]
+                - integral[(row + window_height) as usize][col as usize]
+                + integral[row as usize][col as usize];
 
-//             squared_window_sum = integral_squared[(row + window_height) as usize]
-//                 [(col + window_width) as usize]
-//                 - integral_squared[row as usize][(col + window_width) as usize]
-//                 - integral_squared[(row + window_height) as usize][col as usize]
-//                 + integral_squared[row as usize][col as usize];
+            squared_window_sum = integral_squared[(row + window_height) as usize]
+                [(col + window_width) as usize]
+                - integral_squared[row as usize][(col + window_width) as usize]
+                - integral_squared[(row + window_height) as usize][col as usize]
+                + integral_squared[row as usize][col as usize];
 
-//             window_mean = window_sum / num_of_elements_in_window as f32;
+            window_mean = window_sum / num_of_elements_in_window as f32;
 
-//             squared_window_mean = squared_window_sum / num_of_elements_in_window as f32;
+            squared_window_mean = squared_window_sum / num_of_elements_in_window as f32;
 
-//             sigma_squared = squared_window_mean - window_mean.powf(2.0);
+            sigma_squared = squared_window_mean - window_mean.powf(2.0);
 
-//             sigma = sigma_squared.sqrt();
+            sigma = sigma_squared.sqrt();
 
-//             if window_mean > mean_max {
-//                 mean_max = window_mean;
-//             }
+            if window_mean > mean_max {
+                mean_max = window_mean;
+            }
 
-//             if sigma > standard_dev_max {
-//                 standard_dev_max = sigma;
-//             }
+            if sigma > standard_dev_max {
+                standard_dev_max = sigma;
+            }
 
-//             mean_value_holder[row as usize][col as usize] = window_mean;
-//             standard_dev_value_holder[row as usize][col as usize] = sigma;
-//         }
-//     }
+            mean_value_holder[row as usize][col as usize] = window_mean;
+            standard_dev_value_holder[row as usize][col as usize] = sigma;
+        }
+    }
 
-//     mean_value_holder
-//         .iter_mut()
-//         .flat_map(|row| row.iter_mut())
-//         .for_each(|item| *item = *item / mean_max * 255.0);
+    mean_value_holder
+        .iter_mut()
+        .flat_map(|row| row.iter_mut())
+        .for_each(|item| *item = *item / mean_max * 255.0);
 
-//     standard_dev_value_holder
-//         .iter_mut()
-//         .flat_map(|row| row.iter_mut())
-//         .for_each(|item| *item = *item / standard_dev_max * 255.0);
+    standard_dev_value_holder
+        .iter_mut()
+        .flat_map(|row| row.iter_mut())
+        .for_each(|item| *item = *item / standard_dev_max * 255.0);
 
-//     for row in 0..base_rows {
-//         for col in 0..base_cols {
-//             let mean_pixel: image::Luma<u8> =
-//                 image::Luma::<u8>([mean_value_holder[row as usize][col as usize] as u8]);
-//             let standard_dev_pixel: image::Luma<u8> =
-//                 image::Luma::<u8>([standard_dev_value_holder[row as usize][col as usize] as u8]);
+    for row in 0..base_rows {
+        for col in 0..base_cols {
+            let mean_pixel: image::Luma<u8> =
+                image::Luma::<u8>([mean_value_holder[row as usize][col as usize] as u8]);
+            let standard_dev_pixel: image::Luma<u8> =
+                image::Luma::<u8>([standard_dev_value_holder[row as usize][col as usize] as u8]);
 
-//             result_mean.put_pixel(col, row, mean_pixel);
-//             result_standard_dev.put_pixel(col, row, standard_dev_pixel)
-//         }
-//     }
+            result_mean.put_pixel(col, row, mean_pixel);
+            result_standard_dev.put_pixel(col, row, standard_dev_pixel)
+        }
+    }
 
-//     return (result_standard_dev, result_mean);
-// }
+    return (result_standard_dev, result_mean);
+}
 
 //Might want to put more thought and effort into the size of the result. Right now it just returns the size of the first image
 pub fn subtract_images(base: &Array2<f32>, secondary: &Array2<f32>) -> Array2<f32> {
