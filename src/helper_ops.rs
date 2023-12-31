@@ -274,47 +274,17 @@ pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
 //     return (result_standard_dev, result_mean);
 // }
 
+//Might want to put more thought and effort into the size of the result. Right now it just returns the size of the first image
 pub fn subtract_images(base: &Array2<f32>, secondary: &Array2<f32>) -> Array2<f32> {
     let base_shape = base.raw_dim();
     let secondary_shape = secondary.raw_dim();
 
-    //for the time being I am just going to return the base image size 
-    if 
+    //for the time being I am just going to return the base image size
+    let mut result = Array2::<f32>::zeros(base_shape);
 
-    if base_cols >= secondary_cols && base_rows >= secondary_rows {
-        let mut value_holder: Vec<Vec<i32>> = vec![vec![0; base_cols as usize]; base_rows as usize];
+    base.indexed_iter().for_each(|(index, item)| {
+        result[index] = item - secondary[index];
+    });
 
-        let mut result = GrayImage::new(base_cols, secondary_cols);
-        let mut difference;
-        let mut max = 0;
-        let mut min = 1000;
-
-        for row in 0..secondary_rows {
-            for col in 0..secondary_cols {
-                difference = *base.get_pixel(col, row).channels().get(0).unwrap() as i32
-                    - *secondary.get_pixel(col, row).channels().get(0).unwrap() as i32;
-
-                if difference > max {
-                    max = difference;
-                }
-
-                if difference < min {
-                    min = difference;
-                }
-
-                value_holder[row as usize][col as usize] = difference;
-            }
-        }
-
-        if !(0..255).contains(&(max - min)) {
-            value_holder
-                .iter_mut()
-                .flat_map(|row| row.iter_mut())
-                .for_each(|item| *item = (*item - min) / (max.abs() + min.abs()) * 255);
-        }
-
-        return Ok(result);
-    } else {
-        return Err(std::io::ErrorKind::InvalidInput.into());
-    }
+    return result;
 }
