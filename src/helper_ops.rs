@@ -122,33 +122,6 @@ pub fn haar_filter(base: &Array2<f32>, Mh: usize, Mv: usize) -> Array2<f32> {
         *item = white - gray;
     });
 
-    // for row in 1..base_rows - 1 {
-    //     for col in 0..base_cols {
-    //         gray = integral_zero_pad_base[(row + Mv) as usize][(col + Mh) as usize]
-    //             - integral_zero_pad_base[(row + Mv) as usize][(col) as usize]
-    //             - integral_zero_pad_base[row as usize][(col + Mh) as usize]
-    //             + integral_zero_pad_base[row as usize][col as usize];
-
-    //         white = integral_zero_pad_base[(row + Mv) as usize][(col + 2 * Mh) as usize]
-    //             - integral_zero_pad_base[(row + Mv) as usize][(col + Mh) as usize]
-    //             - integral_zero_pad_base[row as usize][(col + 2 * Mh) as usize]
-    //             + integral_zero_pad_base[row as usize][(col + Mh) as usize];
-    //         result_value = white - gray;
-    //         value_holder[(row - 1) as usize][col as usize] = result_value;
-    //     }
-    // }
-    //     value_holder
-    //         .iter_mut()
-    //         .flat_map(|row| row.iter_mut())
-    //         .for_each(|item| *item = *item / max * 255.0 + 128.0);
-    //     for row in 0..base_rows {
-    //         for col in 0..base_cols {
-    //             let pixel: image::Luma<u8> =
-    //                 image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
-    //             result.put_pixel(col, row, pixel);
-    //         }
-    //     }
-
     return result;
 }
 
@@ -162,7 +135,7 @@ pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
     return result;
 }
 
-// // Return order is standard dev iamge first and mean image second
+// // Return order is standard dev image first and mean image second
 // pub fn local_statistics(
 //     base: &Array2<f32>,
 //     window_height: u32,
@@ -301,61 +274,47 @@ pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
 //     return (result_standard_dev, result_mean);
 // }
 
-// pub fn subtract_images(
-//     base: &Array2<f32>,
-//     secondary: &Array2<f32>,
-// ) -> Result<Array2<f32>, std::io::Error> {
-//     let (base_cols, base_rows) = base.dimensions();
-//     let (secondary_cols, secondary_rows) = secondary.dimensions();
+pub fn subtract_images(base: &Array2<f32>, secondary: &Array2<f32>) -> Array2<f32> {
+    let base_shape = base.raw_dim();
+    let secondary_shape = secondary.raw_dim();
 
-//     println!(
-//         "base_cols: {} base_rows: {} secondary_cols: {} secondary_rows: {}",
-//         base_cols, base_rows, secondary_cols, secondary_rows
-//     );
+    //for the time being I am just going to return the base image size 
+    if 
 
-//     if base_cols >= secondary_cols && base_rows >= secondary_rows {
-//         let mut value_holder: Vec<Vec<i32>> = vec![vec![0; base_cols as usize]; base_rows as usize];
+    if base_cols >= secondary_cols && base_rows >= secondary_rows {
+        let mut value_holder: Vec<Vec<i32>> = vec![vec![0; base_cols as usize]; base_rows as usize];
 
-//         let mut result = GrayImage::new(base_cols, secondary_cols);
-//         let mut difference;
-//         let mut max = 0;
-//         let mut min = 1000;
+        let mut result = GrayImage::new(base_cols, secondary_cols);
+        let mut difference;
+        let mut max = 0;
+        let mut min = 1000;
 
-//         for row in 0..secondary_rows {
-//             for col in 0..secondary_cols {
-//                 difference = *base.get_pixel(col, row).channels().get(0).unwrap() as i32
-//                     - *secondary.get_pixel(col, row).channels().get(0).unwrap() as i32;
+        for row in 0..secondary_rows {
+            for col in 0..secondary_cols {
+                difference = *base.get_pixel(col, row).channels().get(0).unwrap() as i32
+                    - *secondary.get_pixel(col, row).channels().get(0).unwrap() as i32;
 
-//                 if difference > max {
-//                     max = difference;
-//                 }
+                if difference > max {
+                    max = difference;
+                }
 
-//                 if difference < min {
-//                     min = difference;
-//                 }
+                if difference < min {
+                    min = difference;
+                }
 
-//                 value_holder[row as usize][col as usize] = difference;
-//             }
-//         }
+                value_holder[row as usize][col as usize] = difference;
+            }
+        }
 
-//         if !(0..255).contains(&(max - min)) {
-//             value_holder
-//                 .iter_mut()
-//                 .flat_map(|row| row.iter_mut())
-//                 .for_each(|item| *item = (*item - min) / (max.abs() + min.abs()) * 255);
-//         }
+        if !(0..255).contains(&(max - min)) {
+            value_holder
+                .iter_mut()
+                .flat_map(|row| row.iter_mut())
+                .for_each(|item| *item = (*item - min) / (max.abs() + min.abs()) * 255);
+        }
 
-//         for row in 0..secondary_rows {
-//             for col in 0..secondary_cols {
-//                 let difference_pixel: image::Luma<u8> =
-//                     image::Luma::<u8>([value_holder[row as usize][col as usize] as u8]);
-
-//                 result.put_pixel(col, row, difference_pixel);
-//             }
-//         }
-
-//         return Ok(result);
-//     } else {
-//         return Err(std::io::ErrorKind::InvalidInput.into());
-//     }
-// }
+        return Ok(result);
+    } else {
+        return Err(std::io::ErrorKind::InvalidInput.into());
+    }
+}

@@ -27,10 +27,10 @@ impl FloatImage {
 
     pub fn from_luma8(image: GrayImage) -> FloatImage {
         let (col_num, row_num) = image.dimensions();
-        let mut matrix = Array2::<f32>::zeros((row_num as usize, col_num as usize));
+        let mut matrix = Array2::<f32>::zeros((col_num as usize, row_num as usize));
         let mut pixel_value = 0.0;
 
-        image.enumerate_pixels().for_each(|(row, col, pixel)| {
+        image.enumerate_pixels().for_each(|(col, row, pixel)| {
             pixel_value = *pixel.channels().get(0).unwrap() as f32;
             matrix[[col as usize, row as usize]] = pixel_value;
         });
