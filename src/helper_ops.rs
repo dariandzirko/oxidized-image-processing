@@ -34,7 +34,7 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>) -> Array2<f32> {
     let base_shape = base.raw_dim();
     let kernel_shape = kernel.raw_dim();
 
-    let mut zero_pad_base = zero_pad(
+    let zero_pad_base = zero_pad(
         base,
         kernel_shape[1] - 1,
         kernel_shape[0] - 1,
@@ -87,7 +87,7 @@ pub fn haar_filter(base: &Array2<f32>, Mh: usize, Mv: usize) -> Array2<f32> {
     let offset_row = Mv / 2;
     let offset_col = Mh;
 
-    let mut zero_pad_base = zero_pad(
+    let zero_pad_base = zero_pad(
         &base,
         offset_col,
         offset_row,
@@ -154,7 +154,7 @@ pub fn local_statistics(
 ) -> (Array2<f32>, Array2<f32>) {
     let base_shape = base.raw_dim();
 
-    let mut zero_pad_base = zero_pad(
+    let zero_pad_base = zero_pad(
         base,
         (window_width + 1) / 2,
         (window_height + 1) / 2,
@@ -171,14 +171,14 @@ pub fn local_statistics(
     let mut result_standard_dev = Array2::<f32>::zeros(base_shape);
 
     let mut num_of_elements_in_window = window_height * window_width;
-    let mut window_sum;
-    let mut squared_window_sum;
+    let mut window_sum = 0.0;
+    let mut squared_window_sum = 0.0;
 
-    let mut window_mean;
-    let mut squared_window_mean;
+    let mut window_mean = 0.0;
+    let mut squared_window_mean = 0.0;
 
-    let mut sigma;
-    let mut sigma_squared;
+    let mut sigma = 0.0;
+    let mut sigma_squared = 0.0;
 
     //I deleted the cases dealing with boundaries of window size, because all of the math is based on the zero pad elements?
     //That might be an oopsie
@@ -255,7 +255,6 @@ pub fn local_statistics(
 //Might want to put more thought and effort into the size of the result. Right now it just returns the size of the first image
 pub fn subtract_images(base: &Array2<f32>, secondary: &Array2<f32>) -> Array2<f32> {
     let base_shape = base.raw_dim();
-    let secondary_shape = secondary.raw_dim();
 
     //for the time being I am just going to return the base image size
     let mut result = Array2::<f32>::zeros(base_shape);

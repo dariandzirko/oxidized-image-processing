@@ -1,8 +1,8 @@
-use image::{self, GenericImageView, GrayImage, Luma, Pixel};
 use ndarray::Array2;
 
 struct GrayHistogram {
-    histogram: [u32; 256],
+    //Does usize or u32 matter here?
+    histogram: [usize; 256],
     probabilities: [f32; 256],
 }
 
@@ -10,29 +10,27 @@ fn make_grayhistrogram(image: &Array2<f32>) -> GrayHistogram {
     let mut histogram = [0; 256];
     let mut probabilities = [0.0; 256];
 
-    let (width, height) = image.dimensions();
-    let sum = width * height;
+    let image_shape = image.raw_dim();
+    let sum = (image_shape[0] * image_shape[1]) as f32;
 
-    for pixel in image.pixels() {
-        histogram[*pixel.channels().get(0).unwrap() as usize] += 1;
-    }
+    image.into_iter().for_each(|item| {
+        histogram[*item as usize] += 1;
+        probabilities[*item as usize] += 1.0;
+    });
 
-    //Need to fix this
-    probabilities
-        .iter_mut()
-        .enumerate()
-        .map(|(i, x)| *x + (histogram[i] / sum) as f32);
-
-    // println!("histogram: {:?}", histogram);
-    // println!("probabilities: {:?}", probabilities);
-
+    //I feel like this is less readable
     GrayHistogram {
         histogram,
-        probabilities,
+        probabilities: histogram
+            .iter()
+            .map(|x| *x as f32 / sum)
+            .collect::<Vec<f32>>()
+            .try_into()
+            .unwrap(),
     }
 }
 
-pub fn otsu_threshold(image: &Array2<f32) -> f32 {
+pub fn otsu_threshold(image: &Array2<f32>) -> f32 {
     let easy_histogram = make_grayhistrogram(image);
 
     //q1(k)
@@ -66,53 +64,27 @@ pub fn otsu_threshold(image: &Array2<f32) -> f32 {
                 / ((probabilities_class1[i]) * (1.0 - probabilities_class1[i]))
     }
 
-    // println!("q1: {:?}", probabilities_class1);
-    // println!("m1: {:?}", mean_intensities_class1);
-    // println!("mq: {:?}", global_mean_intensity);
-    // println!("sigmab: {:?}", between_class_var);
-
-    //return max(between_class_var);
-    //return between_class_var.iter().max().unwrap;
     let max = between_class_var.iter().fold(f32::MIN, |a, &b| a.max(b));
     return max;
 }
 
-pub fn otsu(image: &Array2<f32) -> Array2<f32 {
-    let (width, height) = image.dimensions();
-    let mut result = GrayImage::new(width, height);
+pub fn otsu(image: &Array2<f32>) -> Array2<f32> {
+    let image_shape = image.raw_dim();
 
-    let otsu_threshold: usize = otsu_threshold(image) as usize;
+    let mut result = Array2::<f32>::zeros(image_shape);
 
-    let dark_pixel = Luma([0]);
-    let light_pixel = Luma([255]);
+    let otsu_threshold = otsu_threshold(image);
 
-    for (col, row, pixel) in image.enumerate_pixels() {
-        if *pixel.channels().get(0).unwrap() as usize > otsu_threshold {
-            result.put_pixel(col, row, light_pixel);
+    let dark_pixel = 0.0;
+    let light_pixel = 255.0;
+
+    image.indexed_iter().for_each(|(index, item)| {
+        if *item > otsu_threshold {
+            result[index] = light_pixel;
         } else {
-            result.put_pixel(col, row, dark_pixel);
+            result[index] = dark_pixel;
         }
-    }
-
-    result
-}
-
-pub fn otsu_filter_background(image: &Array2<f32) -> Array2<f32 {
-    let (width, height) = image.dimensions();
-    let mut result = GrayImage::new(width, height);
-
-    let otsu_threshold: usize = otsu_threshold(image) as usize;
-
-    let dark_pixel = Luma([0]);
-    let light_pixel = Luma([255]);
-
-    for (col, row, pixel) in image.enumerate_pixels() {
-        if *pixel.channels().get(0).unwrap() as usize > otsu_threshold {
-            result.put_pixel(col, row, dark_pixel);
-        } else {
-            result.put_pixel(col, row, light_pixel);
-        }
-    }
+    });
 
     result
 }
