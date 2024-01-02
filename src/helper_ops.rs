@@ -34,17 +34,13 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>) -> Array2<f32> {
     let base_shape = base.raw_dim();
     let kernel_shape = kernel.raw_dim();
 
-    //There has to be a way I can skip this step and just do the math with out this initialization
-    let mut zero_pad_base = Array2::<f32>::zeros((
+    let mut zero_pad_base = zero_pad(
+        base,
+        kernel_shape[1] - 1,
+        kernel_shape[0] - 1,
         base_shape[0] + 2 * (kernel_shape[0] - 1),
         base_shape[1] + 2 * (kernel_shape[1] - 1),
-    ));
-
-    //overlay base onto the zero pad
-    //Should I break this out into a function? I might need something this again
-    base.indexed_iter().for_each(|(index, item)| {
-        zero_pad_base[(index.0 + kernel_shape[0] - 1, index.1 + kernel_shape[1] - 1)] = *item;
-    });
+    );
 
     //Can change shape if I want to return a "same size" convolution image, so the dimensions would just be base_shape
     let mut result = Array2::<f32>::zeros((
@@ -88,18 +84,16 @@ pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
 
 pub fn haar_filter(base: &Array2<f32>, Mh: usize, Mv: usize) -> Array2<f32> {
     let base_shape = base.raw_dim();
-
     let offset_row = Mv / 2;
     let offset_col = Mh;
 
-    let mut zero_pad_base = Array2::<f32>::zeros((
+    let mut zero_pad_base = zero_pad(
+        &base,
+        offset_col,
+        offset_row,
         base_shape[0] + 2 * offset_col,
         base_shape[1] + 2 * offset_row,
-    ));
-
-    base.indexed_iter().for_each(|(index, item)| {
-        zero_pad_base[(index.0 + offset_col, index.1 + offset_row)] = *item;
-    });
+    );
 
     let mut result = Array2::<f32>::zeros(base_shape);
 
@@ -135,37 +129,48 @@ pub fn image_raised_power(base: &Array2<f32>, power: f32) -> Array2<f32> {
     return result;
 }
 
+// Just zero pads then places the new matrix ontop of the zero pad
+pub fn zero_pad(
+    base: &Array2<f32>,
+    offset_x: usize,
+    offset_y: usize,
+    new_width: usize,
+    new_height: usize,
+) -> Array2<f32> {
+    let mut zero_pad_base = Array2::<f32>::zeros((new_height, new_width));
+
+    base.indexed_iter().for_each(|(index, item)| {
+        zero_pad_base[(index.0 + offset_y, index.1 + offset_x)] = *item;
+    });
+
+    zero_pad_base
+}
+
 // // Return order is standard dev image first and mean image second
 pub fn local_statistics(
     base: &Array2<f32>,
-    window_height: u32,
-    window_width: u32,
+    window_height: usize,
+    window_width: usize,
 ) -> (Array2<f32>, Array2<f32>) {
-    let (base_cols, base_rows) = base.dimensions();
+    let base_shape = base.raw_dim();
 
-    let mut zero_pad_base = GrayImage::new(base_cols + window_width, base_rows + window_height);
-
-    image::imageops::overlay(
-        &mut zero_pad_base,
+    let mut zero_pad_base = zero_pad(
         base,
-        ((window_width + 1) / 2) as i64,
-        ((window_height + 1) / 2) as i64,
+        (window_width + 1) / 2,
+        (window_height + 1) / 2,
+        base_shape[0] + window_width,
+        base_shape[1] + window_height,
     );
 
     let integral = integral_image(&zero_pad_base);
 
     let base_squared = image_raised_power(&zero_pad_base, 2.0);
-    let integral_squared = integral_image_matrix(base_squared);
+    let integral_squared = integral_image(&base_squared);
 
-    let mut mean_value_holder: Vec<Vec<f32>> =
-        vec![vec![0.0; base_cols as usize]; base_rows as usize];
-    let mut standard_dev_value_holder: Vec<Vec<f32>> =
-        vec![vec![0.0; base_cols as usize]; base_rows as usize];
+    let mut result_mean = Array2::<f32>::zeros(base_shape);
+    let mut result_standard_dev = Array2::<f32>::zeros(base_shape);
 
-    let mut result_mean = GrayImage::new(base_cols, base_rows);
-    let mut result_standard_dev = GrayImage::new(base_cols, base_rows);
-
-    let mut num_of_elements_in_window;
+    let mut num_of_elements_in_window = window_height * window_width;
     let mut window_sum;
     let mut squared_window_sum;
 
@@ -175,13 +180,16 @@ pub fn local_statistics(
     let mut sigma;
     let mut sigma_squared;
 
-    let mut mean_max = 0.0;
-    let mut standard_dev_max = 0.0;
+    //I deleted the cases dealing with boundaries of window size, because all of the math is based on the zero pad elements?
+    //That might be an oopsie
+    (0..base_shape[0]).into_iter().for_each(|col| {
+        (0..base_shape[1]).into_iter().for_each(|row| {
+            //This looks a little gross and is not immediately intuitive
+            //There has to be a better way of handling the edge cases here
+            //This also isn't probably all that accurate for the right most and bottom most edge cases
+            //but that is a small amount of rows and cols that probably aren't all that important
 
-    for row in 0..base_rows {
-        for col in 0..base_cols {
             num_of_elements_in_window = window_height * window_width;
-
             if row < (window_height / 2) {
                 num_of_elements_in_window -= (window_height / 2) + (row * window_height);
 
@@ -190,43 +198,43 @@ pub fn local_statistics(
                         (window_width / 2 - col) * (window_width - window_height / 2 - row);
                 }
 
-                if row > base_cols - window_height / 2 {
-                    num_of_elements_in_window -= (col + window_width / 2 - base_cols)
+                if col > base_shape[0] - window_height / 2 {
+                    num_of_elements_in_window -= (col + window_width / 2 - base_shape[0])
                         * (window_width - window_height / 2 - row);
                 }
-            } else if row > base_rows - window_height / 2 {
-                num_of_elements_in_window -= (row + window_height / 2 - base_rows) * window_height;
+            } else if row > base_shape[1] - window_height / 2 {
+                num_of_elements_in_window -=
+                    (row + window_height / 2 - base_shape[1]) * window_height;
 
                 if col < window_width / 2 {
                     num_of_elements_in_window -= (window_width / 2 - col)
-                        * (window_width - (row + window_height / 2 - base_rows));
+                        * (window_width - (row + window_height / 2 - base_shape[1]));
                 }
 
-                if col > base_cols - window_height / 2 {
-                    num_of_elements_in_window -= (col + window_width / 2 - base_cols)
-                        * (window_width - (row + window_height / 2 - base_rows));
+                if col > base_shape[0] - window_height / 2 {
+                    num_of_elements_in_window -= (col + window_width / 2 - base_shape[0])
+                        * (window_width - (row + window_height / 2 - base_shape[1]));
                 }
             } else {
                 if col < window_width / 2 {
                     num_of_elements_in_window -= (window_width / 2 - col) * window_width
                 }
 
-                if col > base_cols - window_width / 2 {
+                if col > base_shape[0] - window_width / 2 {
                     num_of_elements_in_window -=
-                        (col + window_width / 2 - base_cols) * window_width;
+                        (col + window_width / 2 - base_shape[0]) * window_width;
                 }
             }
 
-            window_sum = integral[(row + window_height) as usize][(col + window_width) as usize]
-                - integral[row as usize][(col + window_width) as usize]
-                - integral[(row + window_height) as usize][col as usize]
-                + integral[row as usize][col as usize];
+            window_sum = integral[(row + window_height, col + window_width)]
+                - integral[(row, col + window_width)]
+                - integral[(row + window_height, col)]
+                + integral[(row, col)];
 
-            squared_window_sum = integral_squared[(row + window_height) as usize]
-                [(col + window_width) as usize]
-                - integral_squared[row as usize][(col + window_width) as usize]
-                - integral_squared[(row + window_height) as usize][col as usize]
-                + integral_squared[row as usize][col as usize];
+            squared_window_sum = integral_squared[(row + window_height, col + window_width)]
+                - integral_squared[(row, col + window_width)]
+                - integral_squared[(row + window_height, col)]
+                + integral_squared[(row, col)];
 
             window_mean = window_sum / num_of_elements_in_window as f32;
 
@@ -236,40 +244,10 @@ pub fn local_statistics(
 
             sigma = sigma_squared.sqrt();
 
-            if window_mean > mean_max {
-                mean_max = window_mean;
-            }
-
-            if sigma > standard_dev_max {
-                standard_dev_max = sigma;
-            }
-
-            mean_value_holder[row as usize][col as usize] = window_mean;
-            standard_dev_value_holder[row as usize][col as usize] = sigma;
-        }
-    }
-
-    mean_value_holder
-        .iter_mut()
-        .flat_map(|row| row.iter_mut())
-        .for_each(|item| *item = *item / mean_max * 255.0);
-
-    standard_dev_value_holder
-        .iter_mut()
-        .flat_map(|row| row.iter_mut())
-        .for_each(|item| *item = *item / standard_dev_max * 255.0);
-
-    for row in 0..base_rows {
-        for col in 0..base_cols {
-            let mean_pixel: image::Luma<u8> =
-                image::Luma::<u8>([mean_value_holder[row as usize][col as usize] as u8]);
-            let standard_dev_pixel: image::Luma<u8> =
-                image::Luma::<u8>([standard_dev_value_holder[row as usize][col as usize] as u8]);
-
-            result_mean.put_pixel(col, row, mean_pixel);
-            result_standard_dev.put_pixel(col, row, standard_dev_pixel)
-        }
-    }
+            result_mean[(row, col)] = window_mean;
+            result_standard_dev[(row, col)] = sigma;
+        })
+    });
 
     return (result_standard_dev, result_mean);
 }
