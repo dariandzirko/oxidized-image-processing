@@ -7,6 +7,7 @@ mod test {
     use oxidized_image_processing::helper_ops::flip_across_y;
     use oxidized_image_processing::helper_ops::image_raised_power;
     use oxidized_image_processing::helper_ops::integral_image;
+    use oxidized_image_processing::helper_ops::zero_pad;
 
     #[test]
     fn flip_across_x_test() {
@@ -107,5 +108,13 @@ mod test {
         let expected_result = array![[1., 4., 9.], [16., 25., 36.], [49., 64., 81.]];
 
         assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn zero_pad_test() {
+        let base = array![[1., 2., 3.], [4., 5., 6.], [7., 8., 9.], [10., 11., 12.]];
+        println!("base[0,1] : {}", base[(0, 1)]);
+        let zero_pad = zero_pad(&base, 2, 4, 7, 12);
+        println!("zero_pad: {zero_pad}");
     }
 }

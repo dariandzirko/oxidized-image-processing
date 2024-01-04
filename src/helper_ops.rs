@@ -84,15 +84,15 @@ pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
 
 pub fn haar_filter(base: &Array2<f32>, Mh: usize, Mv: usize) -> Array2<f32> {
     let base_shape = base.raw_dim();
-    let offset_row = Mv / 2;
-    let offset_col = Mh;
+    let offset_y = Mv / 2;
+    let offset_x = Mh;
 
     let zero_pad_base = zero_pad(
         &base,
-        offset_col,
-        offset_row,
-        base_shape[0] + 2 * offset_col,
-        base_shape[1] + 2 * offset_row,
+        offset_x,
+        offset_y,
+        base_shape[0] + 2 * offset_x,
+        base_shape[1] + 2 * offset_y,
     );
 
     let mut result = Array2::<f32>::zeros(base_shape);
@@ -137,7 +137,7 @@ pub fn zero_pad(
     new_width: usize,
     new_height: usize,
 ) -> Array2<f32> {
-    let mut zero_pad_base = Array2::<f32>::zeros((new_height, new_width));
+    let mut zero_pad_base = Array2::<f32>::zeros((new_width, new_height));
 
     base.indexed_iter().for_each(|(index, item)| {
         zero_pad_base[(index.0 + offset_y, index.1 + offset_x)] = *item;
