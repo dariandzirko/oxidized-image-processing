@@ -226,15 +226,15 @@ pub fn local_statistics(
                 }
             }
 
-            window_sum = integral[(row + window_height, col + window_width)]
-                - integral[(row, col + window_width)]
-                - integral[(row + window_height, col)]
-                + integral[(row, col)];
+            window_sum = integral[(col + window_width, row + window_height)]
+                - integral[(col + window_width, row)]
+                - integral[(col, row + window_height)]
+                + integral[(col, row)];
 
-            squared_window_sum = integral_squared[(row + window_height, col + window_width)]
-                - integral_squared[(row, col + window_width)]
-                - integral_squared[(row + window_height, col)]
-                + integral_squared[(row, col)];
+            squared_window_sum = integral_squared[(col + window_width, row + window_height)]
+                - integral_squared[(col + window_width, row)]
+                - integral_squared[(col, row + window_height)]
+                + integral_squared[(col, row)];
 
             window_mean = window_sum / num_of_elements_in_window as f32;
 
@@ -244,8 +244,8 @@ pub fn local_statistics(
 
             sigma = sigma_squared.sqrt();
 
-            result_mean[(row, col)] = window_mean;
-            result_standard_dev[(row, col)] = sigma;
+            result_mean[(col, row)] = window_mean;
+            result_standard_dev[(col, row)] = sigma;
         })
     });
 

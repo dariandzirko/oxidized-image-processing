@@ -6,7 +6,7 @@ use std::f32::consts::E;
 pub struct Kernel {
     //Maybe ndarray will be a lot faster here
     //TODO look into ndarray
-    matrix: Array2<f32>,
+    pub matrix: Array2<f32>,
     // Create a window with default options and display the image.
     dimensions: (usize, usize), //row, col
 }

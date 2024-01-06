@@ -18,6 +18,7 @@ impl Default for FloatImage {
 }
 
 impl FloatImage {
+    //This moves the matrix is that necessarily bad?
     pub fn new(matrix: Array2<f32>) -> FloatImage {
         let mut float_image = FloatImage::default();
         float_image.matrix = matrix;
