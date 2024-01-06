@@ -75,6 +75,8 @@ pub fn otsu(image: &Array2<f32>) -> Array2<f32> {
 
     let otsu_threshold = otsu_threshold(image);
 
+    println!("otsu_threshold: {}", otsu_threshold);
+
     let dark_pixel = 0.0;
     let light_pixel = 255.0;
 
