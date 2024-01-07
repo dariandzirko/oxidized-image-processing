@@ -1,4 +1,4 @@
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 
 struct GrayHistogram {
     //Does usize or u32 matter here?
@@ -30,7 +30,7 @@ fn make_grayhistrogram(image: &Array2<f32>) -> GrayHistogram {
     }
 }
 
-pub fn otsu_threshold(image: &Array2<f32>) -> f32 {
+pub fn otsu_threshold(image: &Array2<f32>) -> usize {
     let easy_histogram = make_grayhistrogram(image);
 
     //q1(k)
@@ -56,7 +56,7 @@ pub fn otsu_threshold(image: &Array2<f32>) -> f32 {
     let global_mean_intensity = *mean_intensities_class1.last().unwrap();
 
     //sigmab^2
-    let mut between_class_var = [0.0; 256];
+    let mut between_class_var = Array1::zeros(256);
 
     for i in 0..easy_histogram.histogram.len() {
         between_class_var[i] =
@@ -64,8 +64,19 @@ pub fn otsu_threshold(image: &Array2<f32>) -> f32 {
                 / ((probabilities_class1[i]) * (1.0 - probabilities_class1[i]))
     }
 
-    let max = between_class_var.iter().fold(f32::MIN, |a, &b| a.max(b));
-    return max;
+    let (mut max, mut k_star_prime) = (0.0 as f32, 0);
+
+    between_class_var
+        .iter()
+        .enumerate()
+        .for_each(|(k_star, &sigma_b_squared)| {
+            if max.max(sigma_b_squared) == sigma_b_squared {
+                k_star_prime = k_star;
+                max = sigma_b_squared;
+            }
+        });
+
+    k_star_prime
 }
 
 pub fn otsu(image: &Array2<f32>) -> Array2<f32> {
@@ -73,7 +84,7 @@ pub fn otsu(image: &Array2<f32>) -> Array2<f32> {
 
     let mut result = Array2::<f32>::zeros(image_shape);
 
-    let otsu_threshold = otsu_threshold(image);
+    let otsu_threshold = otsu_threshold(image) as f32;
 
     println!("otsu_threshold: {}", otsu_threshold);
 
