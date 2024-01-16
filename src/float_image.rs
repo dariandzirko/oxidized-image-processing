@@ -73,6 +73,3 @@ impl FloatImage {
         result
     }
 }
-
-// pub fn local_statistics() {}
-// pub fn subtract_image() {}

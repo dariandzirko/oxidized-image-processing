@@ -1,4 +1,4 @@
-use ndarray::Array2;
+use ndarray::{Array1, Array2, Dimension};
 
 //Make these 2 accept more generic primitive types
 pub fn flip_across_x(matrix: &mut Array2<f32>) {
@@ -77,43 +77,6 @@ pub fn integral_image(base: &Array2<f32>) -> Array2<f32> {
             + result.get((index.0, index.1 + 1)).unwrap()
             + result.get((index.0 + 1, index.1)).unwrap()
             - result.get((index.0, index.1)).unwrap()
-    });
-
-    return result;
-}
-
-pub fn haar_filter(base: &Array2<f32>, Mh: usize, Mv: usize) -> Array2<f32> {
-    let base_shape = base.raw_dim();
-    let offset_y = Mv / 2;
-    let offset_x = Mh;
-
-    let zero_pad_base = zero_pad(
-        &base,
-        offset_x,
-        offset_y,
-        base_shape[0] + 2 * offset_x,
-        base_shape[1] + 2 * offset_y,
-    );
-
-    let mut result = Array2::<f32>::zeros(base_shape);
-
-    let integral_zero_pad_base = integral_image(&zero_pad_base);
-
-    let mut gray = 0.0;
-    let mut white = 0.0;
-
-    result.indexed_iter_mut().for_each(|(index, item)| {
-        gray = integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0 + Mh, index.1)]
-            + integral_zero_pad_base[(index.0, index.1)];
-
-        white = integral_zero_pad_base[(index.0 + 2 * Mh, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0 + 2 * Mh, index.1)]
-            + integral_zero_pad_base[(index.0 + Mh, index.1)];
-
-        *item = white - gray;
     });
 
     return result;
