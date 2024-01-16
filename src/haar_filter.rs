@@ -1,7 +1,15 @@
 pub struct Offset_and_Sign {
-    pub offset_coords: (i32, i32),
+    pub offset_coords: (usize, usize),
 
     pub sign: i32,
+}
+
+impl Offset_and_Sign {
+    pub fn new(x_offset: usize, y_offset: usize, sign: i32) -> Offset_and_Sign {
+        Offset_and_Sign {
+            offset_coords: (x_offset, y_offset).sign,
+        }
+    }
 }
 
 pub struct Haar_Filter {
@@ -17,13 +25,44 @@ pub struct Haar_Filter {
 }
 
 impl Haar_Filter {
-    pub fn two_rectangle_horizontal() {}
+    //Assume left side is black, I suppose all of these function can tag a flag to flip the colors
+    //Mh has be to even so that both rectangles can be the same width
+    pub fn two_rectangle_horizontal(Mv: usize, Mh: usize) -> Haar_Filter {
+        // gray = integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
+        //     - integral_zero_pad_base[(index.0, index.1 + Mv)]
+        //     - integral_zero_pad_base[(index.0 + Mh, index.1)]
+        //     + integral_zero_pad_base[(index.0, index.1)];
 
-    pub fn two_rectangle_vertical() {}
+        // white = integral_zero_pad_base[(index.0 + 2 * Mh, index.1 + Mv)]
+        //     - integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
+        //     - integral_zero_pad_base[(index.0 + 2 * Mh, index.1)]
+        //     + integral_zero_pad_base[(index.0 + Mh, index.1)];
 
-    pub fn three_rectangle_horiztonal() {}
+        //        *item = white - gray;
 
-    pub fn four_rectangle() {}
+        let array = array![Offset_and_Sign::new(Mh, Mv, -1), Offset_and_Sign::new(0, Mv, 1), Offset_and_Sign::new(Mh, 0, 1), Offset_and_Sign::new(0, 0, -1)
+                            //Other rectangle time
+                            Offset_and_Sign::new(2*Mh, Mv, 1), Offset_and_Sign::new(Mh, Mv, -1), Offset_and_Sign::new(2*Mh,0, -1), Offset_and_Sign::new(Mh, 0, 1)];
+
+        Haar_Filter {
+            corner_descriptors: array,
+            offset_x: Mh,
+            offsets: Mv / 2,
+        }
+    }
+
+    //Assume top part is black (-)
+    //Mv has be to even so that both rectangles can be the same height
+    pub fn two_rectangle_vertical(Mv: usize, Mh: usize) -> Haar_Filter {}
+
+    //Assume left side is black
+    //Mh is divisible by 3 as each rectangle with have the same width
+    //Mv has be to even so that both rectangles can be the same height
+    pub fn three_rectangle_horiztonal(Mv: usize, Mh: usize) -> Haar_Filter {}
+
+    //Assume the order will be row0: white, black, row1: black white
+    // Mv and Mh are even so they can be divided by 2 so all rectangles are the same shape
+    pub fn four_rectangle(Mv: usize, Mh: usize) -> Haar_Filter {}
 }
 
 pub fn apply_haar_filter(base: &Array2<f32>, haar_filter: Haar_Filter) -> Array2<f32> {
