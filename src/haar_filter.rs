@@ -40,9 +40,17 @@ impl Haar_Filter {
 
         //        *item = white - gray;
 
-        let array = array![Offset_and_Sign::new(Mh, Mv, -1), Offset_and_Sign::new(0, Mv, 1), Offset_and_Sign::new(Mh, 0, 1), Offset_and_Sign::new(0, 0, -1)
-                            //Other rectangle time
-                            Offset_and_Sign::new(2*Mh, Mv, 1), Offset_and_Sign::new(Mh, Mv, -1), Offset_and_Sign::new(2*Mh,0, -1), Offset_and_Sign::new(Mh, 0, 1)];
+        let array = array![
+            Offset_and_Sign::new(Mh, Mv, -1),
+            Offset_and_Sign::new(0, Mv, 1),
+            Offset_and_Sign::new(Mh, 0, 1),
+            Offset_and_Sign::new(0, 0, -1),
+            //Other rectangle time
+            Offset_and_Sign::new(2 * Mh, Mv, 1),
+            Offset_and_Sign::new(Mh, Mv, -1),
+            Offset_and_Sign::new(2 * Mh, 0, -1),
+            Offset_and_Sign::new(Mh, 0, 1)
+        ];
 
         Haar_Filter {
             corner_descriptors: array,
@@ -53,12 +61,53 @@ impl Haar_Filter {
 
     //Assume top part is black (-)
     //Mv has be to even so that both rectangles can be the same height
-    pub fn two_rectangle_vertical(Mv: usize, Mh: usize) -> Haar_Filter {}
+    pub fn two_rectangle_vertical(Mv: usize, Mh: usize) -> Haar_Filter {
+        let array = array![
+            Offset_and_Sign::new(Mh, Mv, -1),
+            Offset_and_Sign::new(0, Mv, 1),
+            Offset_and_Sign::new(Mh, 0, 1),
+            Offset_and_Sign::new(0, 0, -1),
+            //Other rectangle time
+            Offset_and_Sign::new(Mh, 2 * Mv, 1),
+            Offset_and_Sign::new(0, 2 * Mv, -1),
+            Offset_and_Sign::new(Mh, Mv, -1),
+            Offset_and_Sign::new(0, Mv, 1)
+        ];
+
+        Haar_Filter {
+            corner_descriptors: array,
+            offset_x: Mh,
+            offsets: Mv / 2,
+        }
+    }
 
     //Assume left side is black
     //Mh is divisible by 3 as each rectangle with have the same width
     //Mv has be to even so that both rectangles can be the same height
-    pub fn three_rectangle_horiztonal(Mv: usize, Mh: usize) -> Haar_Filter {}
+    pub fn three_rectangle_horiztonal(Mv: usize, Mh: usize) -> Haar_Filter {
+        let array = array![
+            Offset_and_Sign::new(Mh, Mv, -1),
+            Offset_and_Sign::new(0, Mv, 1),
+            Offset_and_Sign::new(Mh, 0, 1),
+            Offset_and_Sign::new(0, 0, -1),
+            //2nd rectangle time
+            Offset_and_Sign::new(2 * Mh, Mv, 1),
+            Offset_and_Sign::new(Mh, Mv, -1),
+            Offset_and_Sign::new(2 * Mh, 0, -1),
+            Offset_and_Sign::new(Mh, 0, 1)
+            //3rd rectangle time
+            Offset_and_Sign::new(3 * Mh, Mv, -1),
+            Offset_and_Sign::new(2* Mh, Mv, 1),
+            Offset_and_Sign::new(3 * Mh, 0, 1),
+            Offset_and_Sign::new(2* Mh, 0, -1)
+        ];
+
+        Haar_Filter {
+            corner_descriptors: array,
+            offset_x: Mh,
+            offsets: Mv / 2,
+        }
+    }
 
     //Assume the order will be row0: white, black, row1: black white
     // Mv and Mh are even so they can be divided by 2 so all rectangles are the same shape
