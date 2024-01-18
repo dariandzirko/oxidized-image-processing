@@ -2,7 +2,8 @@
 mod test {
     use oxidized_image_processing::{
         float_image::FloatImage,
-        helper_ops::{conv_2d, integral_image, local_statistics, subtract_images},
+        haar_filter::{apply_haar_filter, HaarFilter},
+        helper_ops::{conv_2d, integral_image, local_statistics, subtract_images, zero_pad},
         kernel,
         otsu::otsu,
     };
@@ -14,11 +15,69 @@ mod test {
         let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
         let boy_float_image = FloatImage::from_luma8(boy_image);
 
-        let haar_boy_matrix = haar_filter(&boy_float_image.matrix, 20, 25);
+        let base_shape: ndarray::prelude::Dim<[usize; 2]> = boy_float_image.matrix.raw_dim();
+
+        let haar_filter = HaarFilter::two_rectangle_horizontal(20, 25);
+
+        //Can make the integral image here staticed, and referenced
+        let zero_pad_base = zero_pad(
+            &boy_float_image.matrix,
+            haar_filter.offset_x,
+            haar_filter.offset_y,
+            base_shape[0] + 2 * haar_filter.offset_x,
+            base_shape[1] + 2 * haar_filter.offset_y,
+        );
+
+        // let mut result = Array2::<f32>::zeros(base_shape);
+
+        let integral_zero_pad_base = integral_image(&zero_pad_base);
+
+        let haar_boy_matrix = apply_haar_filter(base_shape, haar_filter, &integral_zero_pad_base);
         let haar_boy_image = FloatImage::new(haar_boy_matrix);
         haar_boy_image
             .to_luma8()
             .save("images/outputs/test_horizontal_haar_filter.png")
+            .unwrap();
+    }
+
+    #[test]
+    fn test_experiment_subtract_haar_images() {
+        let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
+        let boy_float_image = FloatImage::from_luma8(boy_image);
+
+        let test_horizontal_haar_filter_image =
+            image::open("images/outputs/test_horizontal_haar_filter.png")
+                .unwrap()
+                .to_luma8();
+
+        let test_horizontal_haar_filter_float_image =
+            FloatImage::from_luma8(test_horizontal_haar_filter_image);
+
+        let boy_minux_test_matrix = subtract_images(
+            &boy_float_image.matrix,
+            &test_horizontal_haar_filter_float_image.matrix,
+        );
+        let boy_minus_test_image = FloatImage::new(boy_minux_test_matrix);
+        boy_minus_test_image
+            .to_luma8()
+            .save("images/outputs/boy_minus_test_image.png")
+            .unwrap();
+
+        let truth_horizontal_haar_filter_image =
+            image::open("images/outputs/truth_horizontal_haar_filter.png")
+                .unwrap()
+                .to_luma8();
+        let truth_horizontal_haar_filter_float_image =
+            FloatImage::from_luma8(truth_horizontal_haar_filter_image);
+
+        let boy_minux_truth_matrix = subtract_images(
+            &boy_float_image.matrix,
+            &truth_horizontal_haar_filter_float_image.matrix,
+        );
+        let boy_minus_truth_image = FloatImage::new(boy_minux_truth_matrix);
+        boy_minus_truth_image
+            .to_luma8()
+            .save("images/outputs/boy_minus_truth_image.png")
             .unwrap();
     }
 

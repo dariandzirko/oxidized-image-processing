@@ -103,7 +103,7 @@ pub fn zero_pad(
     let mut zero_pad_base = Array2::<f32>::zeros((new_width, new_height));
 
     base.indexed_iter().for_each(|(index, item)| {
-        zero_pad_base[(index.0 + offset_y, index.1 + offset_x)] = *item;
+        zero_pad_base[(index.0 + offset_x, index.1 + offset_y)] = *item;
     });
 
     zero_pad_base
@@ -223,7 +223,11 @@ pub fn subtract_images(base: &Array2<f32>, secondary: &Array2<f32>) -> Array2<f3
     let mut result = Array2::<f32>::zeros(base_shape);
 
     base.indexed_iter().for_each(|(index, item)| {
+        // println!("secondary[index]: {}", secondary[index]);
+        // println!("item: {}", item);
+
         result[index] = item - secondary[index];
+        // println!("result[index]: {}", result[index]);
     });
 
     return result;

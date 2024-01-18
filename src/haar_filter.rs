@@ -1,4 +1,4 @@
-use ndarray::{array, Array1, Array2};
+use ndarray::{array, Array1, Array2, Dim};
 
 use crate::helper_ops::{integral_image, zero_pad};
 
@@ -25,8 +25,8 @@ pub struct HaarFilter {
     pub corner_descriptors: Array1<OffsetAndSign>,
 
     // These are for the dimension offsets for the zero pad base
-    offset_x: usize,
-    offset_y: usize,
+    pub offset_x: usize,
+    pub offset_y: usize,
 }
 
 impl HaarFilter {
@@ -149,22 +149,11 @@ impl HaarFilter {
 }
 
 //This should take an integral image as a parameter
-pub fn apply_haar_filter(base: &Array2<f32>, haar_filter: HaarFilter) -> Array2<f32> {
-    let base_shape = base.raw_dim();
-
-    //Can make the integral image here staticed, and referenced
-    let zero_pad_base = zero_pad(
-        &base,
-        haar_filter.offset_x,
-        haar_filter.offset_y,
-        base_shape[0] + 2 * haar_filter.offset_x,
-        base_shape[1] + 2 * haar_filter.offset_y,
-    );
-
-    // let mut result = Array2::<f32>::zeros(base_shape);
-
-    let integral_zero_pad_base = integral_image(&zero_pad_base);
-
+pub fn apply_haar_filter(
+    base_shape: Dim<[usize; 2]>,
+    haar_filter: HaarFilter,
+    integral_zero_pad_base: &Array2<f32>,
+) -> Array2<f32> {
     // result.indexed_iter_mut().for_each(|(index, item)| {
     //     haar_filter
     //         .corner_descriptors
