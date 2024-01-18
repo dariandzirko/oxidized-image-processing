@@ -2,7 +2,7 @@
 mod test {
     use oxidized_image_processing::{
         float_image::FloatImage,
-        helper_ops::{conv_2d, haar_filter, integral_image, local_statistics, subtract_images},
+        helper_ops::{conv_2d, integral_image, local_statistics, subtract_images},
         kernel,
         otsu::otsu,
     };
