@@ -116,15 +116,15 @@ impl Haar_Filter {
 
 pub fn apply_haar_filter(base: &Array2<f32>, haar_filter: Haar_Filter) -> Array2<f32> {
     let base_shape = base.raw_dim();
-    let offset_y = Mv / 2;
-    let offset_x = Mh;
+    // let offset_y = Mv / 2;
+    // let offset_x = Mh;
 
     let zero_pad_base = zero_pad(
         &base,
-        offset_x,
-        offset_y,
-        base_shape[0] + 2 * offset_x,
-        base_shape[1] + 2 * offset_y,
+        haar_filter.offset_x,
+        haar_filter.offset_y,
+        base_shape[0] + 2 * haar_filter.offset_x,
+        base_shape[1] + 2 * haar_filter.offset_y,
     );
 
     let mut result = Array2::<f32>::zeros(base_shape);
@@ -135,17 +135,16 @@ pub fn apply_haar_filter(base: &Array2<f32>, haar_filter: Haar_Filter) -> Array2
     let mut white = 0.0;
 
     result.indexed_iter_mut().for_each(|(index, item)| {
-        gray = integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0 + Mh, index.1)]
-            + integral_zero_pad_base[(index.0, index.1)];
-
-        white = integral_zero_pad_base[(index.0 + 2 * Mh, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
-            - integral_zero_pad_base[(index.0 + 2 * Mh, index.1)]
-            + integral_zero_pad_base[(index.0 + Mh, index.1)];
-
-        *item = white - gray;
+        haar_filter
+            .corner_descriptors
+            .iter
+            .for_each(|corner_decriptor| {
+                *item += (corner_decriptor.sign
+                    * integral_zero_pad_base[(
+                        index.0 + corner_decriptor.offset_coords.0,
+                        index.1 + corner_decriptor.offset_coords.1,
+                    )]);
+            });
     });
 
     return result;
