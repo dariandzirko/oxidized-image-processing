@@ -159,7 +159,8 @@ mod test {
 
         let mut sharpen_filter = kernel::Kernel::sharpening_2d(1.8, 2.5);
 
-        let sharpen_boy_matrix = conv_2d(&mut sharpen_filter.matrix, &boy_float_image.matrix);
+        let sharpen_boy_matrix =
+            conv_2d(&mut sharpen_filter.matrix, &boy_float_image.matrix, false);
 
         let sharpen_boy_image = FloatImage::new(sharpen_boy_matrix);
         sharpen_boy_image
@@ -175,7 +176,32 @@ mod test {
 
         let mut blur_filter = kernel::Kernel::gaussian_2d(1.8);
 
-        let blur_boy_matrix = conv_2d(&mut blur_filter.matrix, &boy_float_image.matrix);
+        let blur_boy_matrix = conv_2d(&mut blur_filter.matrix, &boy_float_image.matrix, false);
+
+        let blur_boy_image = FloatImage::new(blur_boy_matrix);
+        blur_boy_image
+            .to_luma8()
+            .save("images/outputs/blur_boy_image.png")
+            .unwrap();
+    }
+
+    #[test]
+    fn test_blur_same_size() {
+        let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
+        let boy_float_image = FloatImage::from_luma8(boy_image);
+
+        let mut blur_filter = kernel::Kernel::gaussian_2d(1.8);
+
+        let blur_boy_matrix = conv_2d(&mut blur_filter.matrix, &boy_float_image.matrix, true);
+
+        println!(
+            "boy_float_image.matrix.raw_dim(): {:?}",
+            boy_float_image.matrix.raw_dim()
+        );
+        println!(
+            "blur_boy_matrix.matrix.raw_dim(): {:?}",
+            blur_boy_matrix.raw_dim()
+        );
 
         let blur_boy_image = FloatImage::new(blur_boy_matrix);
         blur_boy_image

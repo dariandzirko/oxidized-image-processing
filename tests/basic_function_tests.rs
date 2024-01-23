@@ -39,7 +39,7 @@ mod test {
         let mut kernel = array![[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]];
         let base = array![[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]];
 
-        let result = conv_2d(&mut kernel, &base);
+        let result = conv_2d(&mut kernel, &base, false);
 
         let expected_result = array![
             [1., 2., 3., 2., 1.],
@@ -57,7 +57,7 @@ mod test {
         let mut kernel = array![[1., 3., 1.], [1., 3., 1.], [1., 3., 1.]];
         let base = array![[2., 4., 2.], [2., 5., 2.], [6., 8., 9.]];
 
-        let result = conv_2d(&mut kernel, &base);
+        let result = conv_2d(&mut kernel, &base, false);
 
         let expected_result = array![
             [2., 10., 16., 10., 2.],

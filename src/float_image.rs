@@ -1,5 +1,7 @@
 use image::{GrayImage, Pixel};
-use ndarray::Array2;
+use ndarray::{Array2, ArrayBase, Dim, OwnedRepr};
+
+use crate::{helper_ops::conv_2d, kernel::Kernel};
 
 pub struct FloatImage {
     pub matrix: Array2<f32>,
@@ -71,5 +73,38 @@ impl FloatImage {
         });
 
         result
+    }
+
+    pub fn downsample_by_factor(&mut self, factor: usize) {
+        let mut result: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>> = Array2::zeros((
+            (self.matrix.raw_dim()[0] + factor - 1) / factor,
+            ((self.matrix.raw_dim()[1] + factor - 1) / factor),
+        ));
+
+        self.matrix.indexed_iter().for_each(|(index, item)| {
+            if index.0 % factor == 0 || index.1 % factor == 0 {
+                result[(index.0 / factor, index.1 / factor)] = *item
+            }
+        });
+
+        self.matrix = result;
+        self.populate_min_max();
+    }
+
+    pub fn blur_and_downsample_by_factor(&mut self, factor: usize) {
+        let blurred_matrix = conv_2d(&mut Kernel::gaussian_2d(5.0).matrix, &self.matrix, false);
+        let mut result: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>> = Array2::<f32>::zeros((
+            (self.matrix.raw_dim()[0] + factor - 1) / factor,
+            ((self.matrix.raw_dim()[1] + factor - 1) / factor),
+        ));
+
+        self.matrix.indexed_iter().for_each(|(index, item)| {
+            if index.0 % factor == 0 || index.1 % factor == 0 {
+                result[(index.0 / factor, index.1 / factor)] = *item
+            }
+        });
+
+        self.matrix = result;
+        self.populate_min_max();
     }
 }

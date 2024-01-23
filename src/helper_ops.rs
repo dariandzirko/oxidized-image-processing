@@ -1,3 +1,5 @@
+use std::result;
+
 use ndarray::{Array1, Array2, Dimension};
 
 //Make these 2 accept more generic primitive types
@@ -27,7 +29,7 @@ pub fn flip_2d(matrix: &mut Array2<f32>) {
 }
 
 //Need to work on the same size functionality
-pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>) -> Array2<f32> {
+pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) -> Array2<f32> {
     //(width, height) or (cols, rows) everywhere
 
     //BUUUUUUUUT I don't know if it is row col so this will get me the correct shape but I don't know what the order of the dimensions is
@@ -63,6 +65,22 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>) -> Array2<f32> {
                     * kernel_item;
             });
     });
+
+    if same_size {
+        let result2 = result
+            .indexed_iter()
+            .filter(|(index, _item)| {
+                !(index.0 < (kernel_shape[0] - 1) / 2
+                    || index.0 > base_shape[0] + (kernel_shape[0] - 1) / 2
+                    || index.1 < (kernel_shape[1] - 1) / 2
+                    || index.1 > base_shape[1] + (kernel_shape[0] - 1) / 2)
+            })
+            .map(|(_, item)| *item)
+            .collect::<Array1<f32>>();
+        println!("result2.raw_dim(): {:?}", result2.raw_dim());
+        // .into_shape(base_shape)
+        // .unwrap();
+    }
 
     result
 }
