@@ -192,22 +192,18 @@ mod test {
 
         let mut blur_filter = kernel::Kernel::gaussian_2d(1.8);
 
-        let blur_boy_matrix = conv_2d(&mut blur_filter.matrix, &boy_float_image.matrix, true);
+        let blur_boy_matrix_same = conv_2d(&mut blur_filter.matrix, &boy_float_image.matrix, true);
 
-        println!(
-            "boy_float_image.matrix.raw_dim(): {:?}",
-            boy_float_image.matrix.raw_dim()
-        );
-        println!(
-            "blur_boy_matrix.matrix.raw_dim(): {:?}",
-            blur_boy_matrix.raw_dim()
-        );
-
-        let blur_boy_image = FloatImage::new(blur_boy_matrix);
-        blur_boy_image
+        let blur_boy_image_same = FloatImage::new(blur_boy_matrix_same);
+        blur_boy_image_same
             .to_luma8()
-            .save("images/outputs/blur_boy_image.png")
+            .save("images/outputs/blur_boy_image_same.png")
             .unwrap();
+
+        assert_eq!(
+            blur_boy_image_same.matrix.raw_dim(),
+            boy_float_image.matrix.raw_dim()
+        )
     }
 
     #[test]

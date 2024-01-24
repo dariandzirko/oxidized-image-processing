@@ -67,19 +67,18 @@ pub fn conv_2d(kernel: &mut Array2<f32>, base: &Array2<f32>, same_size: bool) ->
     });
 
     if same_size {
-        let result2 = result
+        result = result
             .indexed_iter()
             .filter(|(index, _item)| {
-                !(index.0 < (kernel_shape[0] - 1) / 2
-                    || index.0 > base_shape[0] + (kernel_shape[0] - 1) / 2
-                    || index.1 < (kernel_shape[1] - 1) / 2
-                    || index.1 > base_shape[1] + (kernel_shape[0] - 1) / 2)
+                index.0 >= (kernel_shape[0] - 1) / 2
+                    && index.0 < base_shape[0] + (kernel_shape[0] - 1) / 2
+                    && index.1 >= (kernel_shape[1] - 1) / 2
+                    && index.1 < base_shape[1] + (kernel_shape[0] - 1) / 2
             })
             .map(|(_, item)| *item)
-            .collect::<Array1<f32>>();
-        println!("result2.raw_dim(): {:?}", result2.raw_dim());
-        // .into_shape(base_shape)
-        // .unwrap();
+            .collect::<Array1<f32>>()
+            .into_shape(base_shape)
+            .unwrap();
     }
 
     result
