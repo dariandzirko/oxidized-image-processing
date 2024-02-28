@@ -17,3 +17,6 @@ debug = true
 [lib]
 name = "oxidized_image_processing"
 src = "src/lib.rs"
+
+repository = "https://github.com/dariandzirko/oxidized-image-processing"
+license = "MIT OR Apache-2.0"

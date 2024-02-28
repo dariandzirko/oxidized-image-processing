@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test {
+    use num::Float;
     use oxidized_image_processing::{
         float_image::FloatImage,
         haar_filter::{apply_haar_filter, HaarFilter},
@@ -40,8 +41,9 @@ mod test {
             .unwrap();
     }
 
+    #[ignore = "experiment"]
     #[test]
-    fn test_experiment_subtract_haar_images() {
+    fn experiment_subtract_haar_images() {
         let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
         let boy_float_image = FloatImage::from_luma8(boy_image);
 
@@ -216,6 +218,56 @@ mod test {
         otsu_boy_image
             .to_luma8()
             .save("images/outputs/otsu_boy_image.png")
+            .unwrap();
+    }
+
+    #[test]
+    fn test_downsample_by_factor() {
+        let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
+        let mut boy_float_image = FloatImage::from_luma8(boy_image);
+
+        boy_float_image.downsample_by_factor(2);
+        boy_float_image
+            .to_luma8()
+            .save("images/outputs/boy_image_downsample_two.png")
+            .unwrap();
+    }
+
+    #[test]
+    fn test_blur_and_downsample_by_factor() {
+        let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
+        let mut boy_float_image = FloatImage::from_luma8(boy_image);
+
+        boy_float_image.blur_and_downsample_by_factor(2);
+        boy_float_image
+            .to_luma8()
+            .save("images/outputs/boy_image_blur_downsample_two.png")
+            .unwrap();
+    }
+
+    #[test]
+    fn experiment_subtract_downsampled_images() {
+        let boy_image_blur_downsample_two =
+            image::open("images/outputs/boy_image_blur_downsample_two.png")
+                .unwrap()
+                .to_luma8();
+        let boy_float_image_blur_downsample_two =
+            FloatImage::from_luma8(boy_image_blur_downsample_two);
+
+        let boy_image_downsample_two = image::open("images/outputs/boy_image_downsample_two.png")
+            .unwrap()
+            .to_luma8();
+        let boy_float_image_downsample_two = FloatImage::from_luma8(boy_image_downsample_two);
+
+        let downsample_subtraction = subtract_images(
+            &boy_float_image_blur_downsample_two.matrix,
+            &boy_float_image_downsample_two.matrix,
+        );
+
+        let downsample_subtraction_image = FloatImage::new(downsample_subtraction);
+        downsample_subtraction_image
+            .to_luma8()
+            .save("images/outputs/downsample_subtraction_image.png")
             .unwrap();
     }
 }
