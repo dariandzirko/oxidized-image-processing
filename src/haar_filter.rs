@@ -154,19 +154,6 @@ pub fn apply_haar_filter(
     haar_filter: HaarFilter,
     integral_zero_pad_base: &Array2<f32>,
 ) -> Array2<f32> {
-    // result.indexed_iter_mut().for_each(|(index, item)| {
-    //     haar_filter
-    //         .corner_descriptors
-    //         .iter()
-    //         .for_each(|corner_decriptor| {
-    //             *item += (corner_decriptor.sign as f32
-    //                 * integral_zero_pad_base[(
-    //                     index.0 + corner_decriptor.offset_coords.0,
-    //                     index.1 + corner_decriptor.offset_coords.1,
-    //                 )]);
-    //         });
-    // });
-
     Array2::<f32>::zeros(base_shape)
         .indexed_iter_mut()
         .map(|(index, item)| {

@@ -2,6 +2,7 @@
 mod test {
     use num::Float;
     use oxidized_image_processing::{
+        canny_edge::{self, canny_edge_detector},
         float_image::FloatImage,
         haar_filter::{apply_haar_filter, HaarFilter},
         helper_ops::{conv_2d, integral_image, local_statistics, subtract_images, zero_pad},
@@ -268,6 +269,19 @@ mod test {
         downsample_subtraction_image
             .to_luma8()
             .save("images/outputs/downsample_subtraction_image.png")
+            .unwrap();
+    }
+
+    #[test]
+    fn test_canny_edge() {
+        let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
+        let boy_float_image = FloatImage::from_luma8(boy_image);
+
+        let canny_edge_matrix = canny_edge_detector(&boy_float_image.matrix);
+
+        FloatImage::new(canny_edge_matrix)
+            .to_luma8()
+            .save("images/outputs/boy_canny_edge.png")
             .unwrap();
     }
 }

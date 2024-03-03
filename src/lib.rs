@@ -1,3 +1,4 @@
+pub mod canny_edge;
 pub mod float_image;
 pub mod haar_filter;
 pub mod helper_ops;
