@@ -218,9 +218,14 @@ pub fn double_threshhold(image: &Array2<f32>, low_thresh: f32, high_thresh: f32)
     result
 }
 
-pub fn canny_edge_detector(image: &Array2<f32>) -> Array2<f32> {
+pub fn canny_edge_detector(
+    image: &Array2<f32>,
+    radius: f32,
+    low_thresh: f32,
+    high_thresh: f32,
+) -> Array2<f32> {
     //This is incorrect atm because it does not return the same size image
-    let smoothed_image = conv_2d(&mut Kernel::gaussian_2d(2.0).matrix, &image, true);
+    let smoothed_image = conv_2d(&mut Kernel::gaussian_2d(radius).matrix, &image, true);
 
     let smoothed_gradient = gradient_image_content(&smoothed_image);
     let (rows, cols) = smoothed_image.dim();
@@ -228,7 +233,8 @@ pub fn canny_edge_detector(image: &Array2<f32>) -> Array2<f32> {
     let (non_maxima_suppressed_image, mag_gradient_image) =
         non_maxima_suppression(smoothed_gradient, rows, cols);
 
-    let double_threshed_image = double_threshhold(&non_maxima_suppressed_image, 15.0, 50.0);
+    let double_threshed_image =
+        double_threshhold(&non_maxima_suppressed_image, low_thresh, high_thresh);
 
     return double_threshed_image;
 }

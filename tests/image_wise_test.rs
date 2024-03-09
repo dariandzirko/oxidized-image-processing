@@ -277,7 +277,7 @@ mod test {
         let boy_image = image::open("images/inputs/Boy.tif").unwrap().to_luma8();
         let boy_float_image = FloatImage::from_luma8(boy_image);
 
-        let canny_edge_matrix = canny_edge_detector(&boy_float_image.matrix);
+        let canny_edge_matrix = canny_edge_detector(&boy_float_image.matrix, 2.0, 15.0, 50.0);
 
         FloatImage::new(canny_edge_matrix)
             .to_luma8()
