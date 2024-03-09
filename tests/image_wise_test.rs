@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod test {
-    use num::Float;
     use oxidized_image_processing::{
-        canny_edge::{self, canny_edge_detector},
+        canny_edge::canny_edge_detector,
         float_image::FloatImage,
         haar_filter::{apply_haar_filter, HaarFilter},
         helper_ops::{conv_2d, integral_image, local_statistics, subtract_images, zero_pad},

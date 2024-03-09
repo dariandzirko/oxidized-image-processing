@@ -1,6 +1,4 @@
-use std::result;
-
-use ndarray::{Array1, Array2, Dimension};
+use ndarray::{Array1, Array2};
 
 //Make these 2 accept more generic primitive types
 pub fn flip_across_x(matrix: &mut Array2<f32>) {
@@ -240,11 +238,7 @@ pub fn subtract_images(base: &Array2<f32>, secondary: &Array2<f32>) -> Array2<f3
     let mut result = Array2::<f32>::zeros(base_shape);
 
     base.indexed_iter().for_each(|(index, item)| {
-        // println!("secondary[index]: {}", secondary[index]);
-        // println!("item: {}", item);
-
         result[index] = item - secondary[index];
-        // println!("result[index]: {}", result[index]);
     });
 
     return result;

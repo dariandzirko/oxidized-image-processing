@@ -1,5 +1,3 @@
-use std::vec;
-
 use ndarray::Array2;
 
 use crate::helper_ops::conv_2d;
@@ -7,8 +5,6 @@ use crate::kernel::Kernel;
 
 #[derive(Default, Clone)]
 pub struct PixelGradientInfo {
-    gx: f32,
-    gy: f32,
     mag: f32,
     angle: f32,
 }
@@ -21,8 +17,6 @@ impl PixelGradientInfo {
 
         let angle_gradient = (gy).atan2(gx);
         PixelGradientInfo {
-            gx,
-            gy,
             mag: magnitude_gradient,
             angle: angle_gradient,
         }
@@ -30,7 +24,6 @@ impl PixelGradientInfo {
 }
 
 pub struct EdgeLine {
-    name: String, //This will be interpretation of the name of each direction of edges not the name of the normal of the direction
     adjacent1: (i32, i32), //first adjacent pixel in the direction of the edge normal
     adjacent2: (i32, i32), //second adjancent pixel in the direction of the edge normal
 }
@@ -45,77 +38,35 @@ pub fn gradient_image_content(image: &Array2<f32>) -> Vec<PixelGradientInfo> {
         .collect()
 }
 
-//There might be an easier match statement to use here/ Maybe some sort of enum based match statement. Damn I really
-//don't know because it is matching ranges of angles
-// pub fn normal_to_direction(angle: f32) -> EdgeLine {
-//     match angle {
-//         _direction
-//             //-pi/8 .. pi/8
-//             if (-std::f32::consts::FRAC_PI_8 ..= std::f32::consts::FRAC_PI_8)
-//                 .contains(&angle) => EdgeLine{name: "vertical_edge".to_owned(), adjacent1: (1, 0), adjacent2: (-1, 0)},
-//         _direction
-//             //pi/8 .. 3pi/8
-//             if (std::f32::consts::FRAC_PI_8 ..= std::f32::consts::FRAC_PI_8 * 3.0)
-//                 .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, -1)},
-//         _direction
-//             //3pi/8 .. 5pi/8
-//             if (std::f32::consts::FRAC_PI_8 * 3.0 ..= std::f32::consts::FRAC_PI_8 * 5.0)
-//                 .contains(&angle) => EdgeLine{name: "horizontal_edge".to_owned(), adjacent1: (0, 1), adjacent2: (0, -1)},
-//         _direction
-//             //5pi/8 .. 7pi/8
-//             if (std::f32::consts::FRAC_PI_8 * 5.0 ..= std::f32::consts::FRAC_PI_8 * 7.0)
-//                 .contains(&angle) => EdgeLine{name: "pos_45_edge".to_owned(), adjacent1: (-1, 1), adjacent2: (1, -1)},
-
-//         _direction
-//             //7pi/8 .. -7pi/8
-//             if (-std::f32::consts::FRAC_PI_8 * 7.0 ..= -std::f32::consts::FRAC_PI_8 * 7.0)
-//                 .contains(&angle) => EdgeLine{name: "vertical_edge".to_owned(), adjacent1: (1, 0), adjacent2: (-1, 0)},
-//         _direction
-//             //-7pi/8 .. -5pi/8
-//             if (-std::f32::consts::FRAC_PI_8 * 7.0 ..= -std::f32::consts::FRAC_PI_8 * 5.0)
-//                 .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, -1)},
-//         _direction
-//             //-5pi/8 .. -3pi/8
-//             if (-std::f32::consts::FRAC_PI_8 * 5.0 ..= -std::f32::consts::FRAC_PI_8 * 3.0)
-//                 .contains(&angle) => EdgeLine{name: "horizontal_edge".to_owned(), adjacent1: (0, 1), adjacent2: (0, -1)},
-//         _direction
-//             //-3pi/8 .. -pi/8
-//             if (-std::f32::consts::FRAC_PI_8 * 3.0 ..= -std::f32::consts::FRAC_PI_8)
-//                 .contains(&angle) => EdgeLine{name: "pos_45_edge".to_owned(), adjacent1: (-1, 1), adjacent2: (1, -1)},
-
-//         _ => EdgeLine{name: "broken".to_owned(), adjacent1: (100, 100), adjacent2: (-100, -100)},
-//     }
-// }
-
 pub fn normal_to_direction(angle: f32) -> EdgeLine {
     //-pi/8 .. pi/8
+    //vertical_edge
     if (-std::f32::consts::FRAC_PI_8..=std::f32::consts::FRAC_PI_8).contains(&angle) {
         return EdgeLine {
-            name: "vertical_edge".to_owned(),
             adjacent1: (1, 0),
             adjacent2: (-1, 0),
         };
     }
     //pi/8 .. 3pi/8
+    //neg_45_edge
     if (std::f32::consts::FRAC_PI_8..=std::f32::consts::FRAC_PI_8 * 3.0).contains(&angle) {
         return EdgeLine {
-            name: "neg_45_edge".to_owned(),
             adjacent1: (1, 1),
             adjacent2: (-1, -1),
         };
     }
     //3pi/8 .. 5pi/8
+    //horizontal_edge
     if (std::f32::consts::FRAC_PI_8 * 3.0..=std::f32::consts::FRAC_PI_8 * 5.0).contains(&angle) {
         return EdgeLine {
-            name: "horizontal_edge".to_owned(),
             adjacent1: (0, 1),
             adjacent2: (0, -1),
         };
     }
     //5pi/8 .. 7pi/8
+    //pos_45_edge
     if (std::f32::consts::FRAC_PI_8 * 5.0..=std::f32::consts::FRAC_PI_8 * 7.0).contains(&angle) {
         return EdgeLine {
-            name: "pos_45_edge".to_owned(),
             adjacent1: (-1, 1),
             adjacent2: (1, -1),
         };
@@ -124,42 +75,42 @@ pub fn normal_to_direction(angle: f32) -> EdgeLine {
     // Second half
 
     //7pi/8 .. -7pi/8
+    //vertical_edge
     if (std::f32::consts::FRAC_PI_8 * 7.0..=std::f32::consts::PI).contains(&angle)
         || (-std::f32::consts::PI..=-std::f32::consts::FRAC_PI_8 * 7.0).contains(&angle)
     {
         return EdgeLine {
-            name: "vertical_edge".to_owned(),
             adjacent1: (1, 0),
             adjacent2: (-1, 0),
         };
     }
     //-7pi/8 .. -5pi/8
+    //neg_45_edge
     if (-std::f32::consts::FRAC_PI_8 * 7.0..=-std::f32::consts::FRAC_PI_8 * 5.0).contains(&angle) {
         return EdgeLine {
-            name: "neg_45_edge".to_owned(),
             adjacent1: (1, 1),
             adjacent2: (-1, -1),
         };
     }
     //-5pi/8 .. -3pi/8
+    //horizontal_edge
     if (-std::f32::consts::FRAC_PI_8 * 5.0..=-std::f32::consts::FRAC_PI_8 * 3.0).contains(&angle) {
         return EdgeLine {
-            name: "horizontal_edge".to_owned(),
             adjacent1: (0, 1),
             adjacent2: (0, -1),
         };
     }
     //-3pi/8 .. -pi/8
+    //pos_45_edge
     if (-std::f32::consts::FRAC_PI_8 * 3.0..=-std::f32::consts::FRAC_PI_8).contains(&angle) {
         return EdgeLine {
-            name: "pos_45_edge".to_owned(),
             adjacent1: (-1, 1),
             adjacent2: (1, -1),
         };
     }
 
+    //broken
     return EdgeLine {
-        name: "broken".to_owned(),
         adjacent1: (100, 100),
         adjacent2: (-100, -100),
     };
@@ -230,7 +181,7 @@ pub fn canny_edge_detector(
     let smoothed_gradient = gradient_image_content(&smoothed_image);
     let (rows, cols) = smoothed_image.dim();
 
-    let (non_maxima_suppressed_image, mag_gradient_image) =
+    let (non_maxima_suppressed_image, _mag_gradient_image) =
         non_maxima_suppression(smoothed_gradient, rows, cols);
 
     let double_threshed_image =

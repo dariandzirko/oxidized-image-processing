@@ -1,7 +1,5 @@
 use ndarray::{array, Array1, Array2, Dim};
 
-use crate::helper_ops::{integral_image, zero_pad};
-
 pub struct OffsetAndSign {
     pub offset_coords: (usize, usize),
 
@@ -32,118 +30,106 @@ pub struct HaarFilter {
 impl HaarFilter {
     //Assume left side is black, I suppose all of these function can tag a flag to flip the colors
     //Mh has be to even so that both rectangles can be the same width
-    pub fn two_rectangle_horizontal(Mv: usize, Mh: usize) -> HaarFilter {
-        // gray = integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
-        //     - integral_zero_pad_base[(index.0, index.1 + Mv)]
-        //     - integral_zero_pad_base[(index.0 + Mh, index.1)]
-        //     + integral_zero_pad_base[(index.0, index.1)];
-
-        // white = integral_zero_pad_base[(index.0 + 2 * Mh, index.1 + Mv)]
-        //     - integral_zero_pad_base[(index.0 + Mh, index.1 + Mv)]
-        //     - integral_zero_pad_base[(index.0 + 2 * Mh, index.1)]
-        //     + integral_zero_pad_base[(index.0 + Mh, index.1)];
-
-        //        *item = white - gray;
-
+    pub fn two_rectangle_horizontal(mv: usize, mh: usize) -> HaarFilter {
         let array = array![
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(0, Mv, 1),
-            OffsetAndSign::new(Mh, 0, 1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(0, mv, 1),
+            OffsetAndSign::new(mh, 0, 1),
             OffsetAndSign::new(0, 0, -1),
             //Other rectangle time
-            OffsetAndSign::new(2 * Mh, Mv, 1),
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(2 * Mh, 0, -1),
-            OffsetAndSign::new(Mh, 0, 1)
+            OffsetAndSign::new(2 * mh, mv, 1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(2 * mh, 0, -1),
+            OffsetAndSign::new(mh, 0, 1)
         ];
 
         HaarFilter {
             corner_descriptors: array,
-            offset_x: Mh,
-            offset_y: Mv / 2,
+            offset_x: mh,
+            offset_y: mv / 2,
         }
     }
 
     //Assume top part is black (-)
     //Mv has be to even so that both rectangles can be the same height
-    pub fn two_rectangle_vertical(Mv: usize, Mh: usize) -> HaarFilter {
+    pub fn two_rectangle_vertical(mv: usize, mh: usize) -> HaarFilter {
         let array = array![
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(0, Mv, 1),
-            OffsetAndSign::new(Mh, 0, 1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(0, mv, 1),
+            OffsetAndSign::new(mh, 0, 1),
             OffsetAndSign::new(0, 0, -1),
             //Other rectangle time
-            OffsetAndSign::new(Mh, 2 * Mv, 1),
-            OffsetAndSign::new(0, 2 * Mv, -1),
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(0, Mv, 1)
+            OffsetAndSign::new(mh, 2 * mv, 1),
+            OffsetAndSign::new(0, 2 * mv, -1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(0, mv, 1)
         ];
 
         HaarFilter {
             corner_descriptors: array,
-            offset_x: Mh / 2,
-            offset_y: Mv,
+            offset_x: mh / 2,
+            offset_y: mv,
         }
     }
 
     //Assume left side is black
     //Mv has be to even so that both rectangles can be the same height
     //The offsets here are going to be hard
-    pub fn three_rectangle_horiztonal(Mv: usize, Mh: usize) -> HaarFilter {
+    pub fn three_rectangle_horiztonal(mv: usize, mh: usize) -> HaarFilter {
         let array = array![
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(0, Mv, 1),
-            OffsetAndSign::new(Mh, 0, 1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(0, mv, 1),
+            OffsetAndSign::new(mh, 0, 1),
             OffsetAndSign::new(0, 0, -1),
             //2nd rectangle time
-            OffsetAndSign::new(2 * Mh, Mv, 1),
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(2 * Mh, 0, -1),
-            OffsetAndSign::new(Mh, 0, 1),
+            OffsetAndSign::new(2 * mh, mv, 1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(2 * mh, 0, -1),
+            OffsetAndSign::new(mh, 0, 1),
             //3rd rectangle time
-            OffsetAndSign::new(3 * Mh, Mv, -1),
-            OffsetAndSign::new(2 * Mh, Mv, 1),
-            OffsetAndSign::new(3 * Mh, 0, 1),
-            OffsetAndSign::new(2 * Mh, 0, -1)
+            OffsetAndSign::new(3 * mh, mv, -1),
+            OffsetAndSign::new(2 * mh, mv, 1),
+            OffsetAndSign::new(3 * mh, 0, 1),
+            OffsetAndSign::new(2 * mh, 0, -1)
         ];
 
         HaarFilter {
             corner_descriptors: array,
             //This is wrong but close idea
-            offset_x: Mh * 3 / 2,
-            offset_y: Mv / 2,
+            offset_x: mh * 3 / 2,
+            offset_y: mv / 2,
         }
     }
 
     //Assume the order will be row0: white, black, row1: black white
     // Mv and Mh are even so they can be divided by 2 so all rectangles are the same shape
-    pub fn four_rectangle(Mv: usize, Mh: usize) -> HaarFilter {
+    pub fn four_rectangle(mv: usize, mh: usize) -> HaarFilter {
         let array = array![
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(0, Mv, 1),
-            OffsetAndSign::new(Mh, 0, 1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(0, mv, 1),
+            OffsetAndSign::new(mh, 0, 1),
             OffsetAndSign::new(0, 0, -1),
             //Top right rectangle time
-            OffsetAndSign::new(2 * Mh, Mv, 1),
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(2 * Mh, 0, -1),
-            OffsetAndSign::new(Mh, 0, 1),
+            OffsetAndSign::new(2 * mh, mv, 1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(2 * mh, 0, -1),
+            OffsetAndSign::new(mh, 0, 1),
             //Bottom left rectangle time
-            OffsetAndSign::new(Mh, 2 * Mv, 1),
-            OffsetAndSign::new(0, 2 * Mv, -1),
-            OffsetAndSign::new(Mh, Mv, -1),
-            OffsetAndSign::new(0, Mv, 1),
+            OffsetAndSign::new(mh, 2 * mv, 1),
+            OffsetAndSign::new(0, 2 * mv, -1),
+            OffsetAndSign::new(mh, mv, -1),
+            OffsetAndSign::new(0, mv, 1),
             //Bottom right rectangle time
-            OffsetAndSign::new(2 * Mh, 2 * Mv, -1),
-            OffsetAndSign::new(Mh, 2 * Mv, 1),
-            OffsetAndSign::new(2 * Mh, Mv, 1),
-            OffsetAndSign::new(Mh, Mv, -1)
+            OffsetAndSign::new(2 * mh, 2 * mv, -1),
+            OffsetAndSign::new(mh, 2 * mv, 1),
+            OffsetAndSign::new(2 * mh, mv, 1),
+            OffsetAndSign::new(mh, mv, -1)
         ];
 
         HaarFilter {
             corner_descriptors: array,
-            offset_x: Mh,
-            offset_y: Mv,
+            offset_x: mh,
+            offset_y: mv,
         }
     }
 }
@@ -172,6 +158,4 @@ pub fn apply_haar_filter(
         .collect::<Array1<f32>>()
         .into_shape(base_shape)
         .unwrap()
-
-    // result
 }
